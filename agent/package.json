@@ -1,0 +1,21 @@
+{
+  "name": "voice-concierge-agent",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "A Standard Agent whose caller side speaks and listens through runtime streams.",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1 --port 5173",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@standardagents/builder": "0.45.10",
+    "@standardagents/openai": "0.45.10",
+    "@standardagents/spec": "0.45.10",
+    "zod": "^4.0.0"
+  },
+  "devDependencies": {
+    "typescript": "^7.0.0",
+    "vite": "^8.0.0"
+  }
+}

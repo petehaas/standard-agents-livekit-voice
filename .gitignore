@@ -1,0 +1,10 @@
+node_modules
+dist
+.env
+.dev.vars
+.wrangler
+.agentbuilder-dev.log
+agent/.agents/*
+!agent/.agents/skills/
+recordings/
+.DS_Store
