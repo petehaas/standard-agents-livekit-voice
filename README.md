@@ -113,7 +113,17 @@ npm start               # first copies the speech keys from agent/.dev.vars into
   http://127.0.0.1:8787/
 ```
 
-Open it and press Start call. The page asks for the microphone only and shows the agent's orb. Ask about an order by name: Maya Chen, Andre Walsh, Priya Shah, Jonah Ellis, Lena Okonkwo, or Samir Haddad. When the agent finds one, its card appears on the page, and you can ask follow-ups (when it arrives, where it ships, what it cost). The admin UI's thread view shows the transcript and tool calls as you talk, and the host terminal logs every speak, listen, and order card.
+Open it and press Start call. The page asks for the microphone only and shows the agent's orb. When the agent asks, say a three-digit order number. The demo has five:
+
+| Order | Item | Status |
+| --- | --- | --- |
+| 111 | Linen throw blanket | In process |
+| 222 | Ceramic pour-over set | Shipped |
+| 333 | Wool overcoat | Delivered |
+| 444 | Stoneware dinner plates | In process |
+| 555 | Beeswax pillar candles | Shipped |
+
+"111", "one one one", "triple one", and "one eleven" all work. The order card appears on the page, and you can ask follow-ups (when it arrives, where it ships, what it cost) or give another number. To add orders, edit `ORDERS` in `agent/src/orders.ts`. The admin UI's thread view shows the transcript and tool calls as you talk, and the host terminal logs every speak, listen, and order card.
 
 `npm run probe` output looks like this:
 
@@ -164,7 +174,7 @@ These are agent-side, read through `state.env()`, so they can be set per instanc
 | `VOICE_STT_PROVIDER` | `openai`, `deepgram` | `openai` |
 | `VOICE_TTS_PROVIDER` | `openai`, `elevenlabs`, `deepgram` | `openai` |
 | `VOICE_STT_LANGUAGE` | language code | `en` (short clips are otherwise often transcribed as another language) |
-| `VOICE_STT_KEYTERMS` | comma-separated words | the demo's customer names. Passed to OpenAI as a prompt and to Deepgram as `keyterm` |
+| `VOICE_STT_KEYTERMS` | comma-separated words | `Harbor Goods, order number`. Passed to OpenAI as a prompt and to Deepgram as `keyterm` |
 | `OPENAI_TTS_INSTRUCTIONS` | delivery direction | a warm, upbeat support voice |
 | `OPENAI_STT_MODEL`, `OPENAI_TTS_MODEL`, `OPENAI_TTS_VOICE` | | `gpt-4o-mini-transcribe`, `gpt-4o-mini-tts`, `coral` |
 | `DEEPGRAM_MODEL`, `DEEPGRAM_TTS_MODEL` | | `nova-3`, `aura-2-thalia-en` |
@@ -196,7 +206,7 @@ agent/                               Standard Agents Builder project
   agents/models/voice_fast.ts          the reply model
   agents/tools/                        lookup_order, end_call
   agents/agents/stream_probe.ts        keyless self-test agent
-  src/orders.ts                        the demo order book and name matching
+  src/orders.ts                        the demo order book and spoken-number parsing
   src/voice/protocol.ts                the capability contract, shared with the host
   src/voice/turn.ts                    one voice turn: speak, listen, transcribe, inject
   src/voice/streams.ts                 runtime side of speak / listen / show / caption / hangup
@@ -219,7 +229,7 @@ cd host && npm run typecheck
 cd agent && npm run typecheck
 ```
 
-The suite runs the agent's real runtime-side stream code against the host's real bridge client over a WebSocket. A mock runtime copies the Builder's stream semantics. It covers playback, barge-in with TTS cancellation, pre-roll after an interruption, endpointing, silence timeouts, refused capabilities, runtime aborts, TTS failures, Silero on recorded speech, order lookup and name matching, Deepgram live transcription against a fake socket (including fallback), and the turn-level guards (trailing words, tool preambles, duplicated replies).
+The suite runs the agent's real runtime-side stream code against the host's real bridge client over a WebSocket. A mock runtime copies the Builder's stream semantics. It covers playback, barge-in with TTS cancellation, pre-roll after an interruption, endpointing, silence timeouts, refused capabilities, runtime aborts, TTS failures, Silero on recorded speech, order lookup and spoken-number parsing, Deepgram live transcription against a fake socket (including fallback), and the turn-level guards (trailing words, tool preambles, duplicated replies).
 
 `npm run probe` checks the stream plumbing against a real Builder dev server without LiveKit or any API calls.
 

@@ -51,8 +51,8 @@ export function openaiStt(apiKey: string, model: string, language?: string, keyt
       form.append('response_format', 'json');
       // Without this, a short or noisy clip is often transcribed as Chinese.
       if (language) form.append('language', language);
-      // Names the recognizer would otherwise guess at. Without this, "Maya Chen"
-      // came back as Chinese characters even with language=en.
+      // Words the recognizer would otherwise guess at. Short clips can come
+      // back in another language even with language=en; a prompt anchors them.
       if (keyterms.length) form.append('prompt', `Harbor Goods order support call in English. Names: ${keyterms.join(', ')}.`);
       form.append('file', new Blob([pcmToWav(pcm, LISTEN_SAMPLE_RATE)], { type: 'audio/wav' }), 'utterance.wav');
       const response = await fetch('https://api.openai.com/v1/audio/transcriptions', {

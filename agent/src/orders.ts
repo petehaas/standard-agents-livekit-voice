@@ -71,10 +71,15 @@ export interface FoundOrder {
 
 export type LookupResult =
   | FoundOrder
-  | { outcome: 'need_name' }
-  | { outcome: 'none' }
-  | { outcome: 'many'; names: string[] }
-  | { outcome: 'mismatch' };
+  /** Nothing that sounds like an order number was said. */
+  | { outcome: 'need_number' }
+  /** Digits were heard, but not one clear three-digit order number. */
+  | { outcome: 'incomplete'; heard: string }
+  /** Three digits, but no such order. */
+  | { outcome: 'none'; orderNumber: string };
+
+/** Order numbers are always this many digits. Short enough to say, easy to hear. */
+export const ORDER_NUMBER_DIGITS = 3;
 
 const STATUS_LABEL: Record<OrderStatus, string> = {
   in_process: 'In process',
@@ -92,7 +97,7 @@ const STATUS_INDEX: Record<OrderStatus, number> = {
 
 export const ORDERS: readonly OrderRecord[] = [
   {
-    orderNumber: '1842',
+    orderNumber: '111',
     customerName: 'Maya Chen',
     item: 'linen throw blanket',
     title: 'Linen throw blanket',
@@ -106,7 +111,7 @@ export const ORDERS: readonly OrderRecord[] = [
     placedDaysAgo: 1,
   },
   {
-    orderNumber: '1904',
+    orderNumber: '222',
     customerName: 'Andre Walsh',
     item: 'ceramic pour-over set',
     title: 'Ceramic pour-over set',
@@ -120,7 +125,7 @@ export const ORDERS: readonly OrderRecord[] = [
     placedDaysAgo: 4,
   },
   {
-    orderNumber: '1760',
+    orderNumber: '333',
     customerName: 'Priya Shah',
     item: 'wool overcoat',
     title: 'Wool overcoat',
@@ -134,7 +139,7 @@ export const ORDERS: readonly OrderRecord[] = [
     placedDaysAgo: 12,
   },
   {
-    orderNumber: '2018',
+    orderNumber: '444',
     customerName: 'Jonah Ellis',
     item: 'stoneware dinner plates',
     title: 'Stoneware dinner plates',
@@ -148,7 +153,7 @@ export const ORDERS: readonly OrderRecord[] = [
     placedDaysAgo: 0,
   },
   {
-    orderNumber: '1888',
+    orderNumber: '555',
     customerName: 'Lena Okonkwo',
     item: 'beeswax pillar candles',
     title: 'Beeswax pillar candles',
@@ -160,20 +165,6 @@ export const ORDERS: readonly OrderRecord[] = [
     status: 'shipped',
     deliveryInDays: 2,
     placedDaysAgo: 3,
-  },
-  {
-    orderNumber: '1695',
-    customerName: 'Samir Haddad',
-    item: 'oak cutting board',
-    title: 'Oak cutting board',
-    detail: 'Walnut edge, 12 by 18 inches',
-    quantity: 1,
-    totalCents: 6400,
-    city: 'Seattle',
-    image: '/products/cutting-board.jpg',
-    status: 'delivered',
-    deliveryInDays: -3,
-    placedDaysAgo: 9,
   },
 ];
 
@@ -214,8 +205,8 @@ function present(order: OrderRecord, today: Date): FoundOrder {
   const total = money(order.totalCents);
   const say =
     order.status === 'delivered'
-      ? `${order.customerName}'s ${order.item}, order ${order.orderNumber}, was delivered ${deliveryRelative}, on ${deliveryDate}.`
-      : `${order.customerName}'s ${order.item}, order ${order.orderNumber}, is ${statusLabel.toLowerCase()} and should be delivered ${deliveryRelative}, on ${deliveryDate}.`;
+      ? `${order.customerName}'s ${order.item}, order ${order.orderNumber.split('').join(' ')}, was delivered ${deliveryRelative}, on ${deliveryDate}.`
+      : `${order.customerName}'s ${order.item}, order ${order.orderNumber.split('').join(' ')}, is ${statusLabel.toLowerCase()} and should be delivered ${deliveryRelative}, on ${deliveryDate}.`;
   const deliveryLabel =
     order.status === 'delivered' ? `Delivered ${deliveryDate}` : `Arrives ${deliveryDate}`;
   return {
@@ -252,84 +243,103 @@ function present(order: OrderRecord, today: Date): FoundOrder {
   };
 }
 
-/**
- * Whether the tool arguments came from the caller's latest words.
- * The model otherwise invents a customer, and the first one in the book
- * (Maya Chen) gets shown on every call.
- */
-export function callerSupplied(
-  transcript: string,
-  input: { customerName?: string; orderNumber?: string },
-): 'ok' | 'not_yet' | 'not_said' {
-  const text = transcript.trim();
-  if (!text || text === '[caller connected]' || text === '[no response]' || text === '[unintelligible]') {
-    return 'not_yet';
-  }
-  const said = new Set(wordsOf(text));
-  const nameWords = wordsOf(input.customerName ?? '').filter((word) => word.length >= 3);
-  const digits = (input.orderNumber ?? '').replace(/\D/g, '');
-  const saidDigits = text.replace(/\D/g, '');
-  if (nameWords.length > 0 && !nameWords.some((word) => said.has(word))) return 'not_said';
-  if (digits.length >= 4 && !saidDigits.includes(digits)) return 'not_said';
-  if (nameWords.length === 0 && digits.length < 4) return 'not_yet';
-  return 'ok';
-}
+const DIGIT_WORDS: Record<string, string> = {
+  zero: '0', oh: '0', o: '0', one: '1', two: '2', to: '2', too: '2', three: '3', four: '4', for: '4',
+  five: '5', six: '6', seven: '7', eight: '8', ate: '8', nine: '9',
+};
+const TEENS: Record<string, string> = {
+  ten: '10', eleven: '11', twelve: '12', thirteen: '13', fourteen: '14', fifteen: '15',
+  sixteen: '16', seventeen: '17', eighteen: '18', nineteen: '19',
+};
+const TENS: Record<string, string> = {
+  twenty: '2', thirty: '3', forty: '4', fifty: '5', sixty: '6', seventy: '7', eighty: '8', ninety: '9',
+};
 
-function wordsOf(value: string): string[] {
-  return value
+/**
+ * Turn what the caller said into the digits of an order number.
+ *
+ * Speech-to-text usually writes "111", but callers also say "one one one",
+ * "triple one", "one eleven", or "three hundred thirty three", and STT
+ * sometimes keeps those as words. Returns the digits in order; the caller
+ * checks the length. Word-number guessing is deliberately limited to the
+ * forms people use for short codes.
+ */
+export function spokenDigits(text: string): string {
+  const tokens = text
     .toLowerCase()
+    .replace(/(\d)/g, ' $1 ')
     .replace(/[^a-z0-9\s]/g, ' ')
     .split(/\s+/)
     .filter(Boolean);
-}
-
-function nameHits(query: string[]): OrderRecord[] {
-  return ORDERS.filter((order) => {
-    const names = order.customerName.toLowerCase().split(/\s+/);
-    return names.some((name) => query.includes(name));
-  });
+  let out = '';
+  for (let i = 0; i < tokens.length; i++) {
+    const token = tokens[i];
+    const next = tokens[i + 1];
+    if (/^\d$/.test(token)) out += token;
+    else if ((token === 'double' || token === 'triple') && next && (DIGIT_WORDS[next] || /^\d$/.test(next))) {
+      out += (DIGIT_WORDS[next] ?? next).repeat(token === 'double' ? 2 : 3);
+      i++;
+    } else if (token === 'hundred') {
+      // "three hundred" -> 300 placeholder; the following words fill the zeros.
+      const rest = tokens.slice(i + 1).join(' ');
+      const tail = spokenDigits(rest.replace(/^and\s+/, ''));
+      out += tail.length >= 2 ? tail.slice(0, 2) : tail.length === 1 ? `0${tail}` : '00';
+      break;
+    } else if (TEENS[token]) out += TEENS[token];
+    else if (TENS[token]) {
+      const unit = next ? DIGIT_WORDS[next] : undefined;
+      if (unit && unit !== '0') {
+        out += TENS[token] + unit;
+        i++;
+      } else out += `${TENS[token]}0`;
+    } else if (DIGIT_WORDS[token] && !(token === 'o' || token === 'to' || token === 'too' || token === 'for' || token === 'ate') ) {
+      out += DIGIT_WORDS[token];
+    } else if ((token === 'to' || token === 'too' || token === 'for' || token === 'ate' || token === 'o') && out.length > 0 && out.length < ORDER_NUMBER_DIGITS) {
+      // Homophones count only mid-number ("one to one"), never as ordinary words.
+      out += DIGIT_WORDS[token];
+    }
+  }
+  return out;
 }
 
 /**
- * Match a name or order number the caller actually said.
- * An order number that belongs to someone else is a mismatch, not a hit.
+ * Find the order the caller asked for.
+ *
+ * `spoken` is the caller's latest words. When they hold a full number, they
+ * win. Otherwise ("yes, that one") the model's `orderNumber` is used, but
+ * only if the caller said those digits earlier in the call (`earlier`), so
+ * the model can refer back to an order but never invent one.
  */
 export function lookupOrder(
-  input: { customerName?: string; orderNumber?: string },
+  input: { spoken?: string; orderNumber?: string; earlier?: string[] },
   today = new Date(),
 ): LookupResult {
-  const blob = [input.customerName, input.orderNumber].filter(Boolean).join(' ').trim();
-  if (!blob) return { outcome: 'need_name' };
-
-  const query = wordsOf(blob);
-  const digits = (input.orderNumber ?? blob).replace(/\D/g, '');
-  const byNumber = digits.length >= 4 ? ORDERS.filter((order) => order.orderNumber === digits) : [];
-  const byName = nameHits(query);
-
-  if (byNumber.length === 1) {
-    const order = byNumber[0];
-    if (byName.length > 0 && !byName.some((hit) => hit.orderNumber === order.orderNumber)) {
-      return { outcome: 'mismatch' };
-    }
-    return present(order, today);
-  }
-
-  if (byName.length === 1) return present(byName[0], today);
-  if (byName.length > 1) return { outcome: 'many', names: byName.map((order) => order.customerName) };
-  return { outcome: 'none' };
+  const fromWords = spokenDigits(input.spoken ?? '');
+  const fromModel = spokenDigits(input.orderNumber ?? '');
+  const saidBefore =
+    fromModel.length === ORDER_NUMBER_DIGITS &&
+    [input.spoken ?? '', ...(input.earlier ?? [])].some((text) => spokenDigits(text).includes(fromModel));
+  const digits = fromWords.length >= ORDER_NUMBER_DIGITS || !saidBefore ? fromWords : fromModel;
+  if (!digits) return { outcome: 'need_number' };
+  if (digits.length < ORDER_NUMBER_DIGITS) return { outcome: 'incomplete', heard: digits };
+  // Extra digits ("I bought 2, order 444") are fine if exactly one real order is inside them.
+  const matches = ORDERS.filter((candidate) =>
+    digits.length === ORDER_NUMBER_DIGITS ? candidate.orderNumber === digits : digits.includes(candidate.orderNumber),
+  );
+  const order = matches.length === 1 ? matches[0] : undefined;
+  if (!order && digits.length > ORDER_NUMBER_DIGITS) return { outcome: 'incomplete', heard: digits };
+  return order ? present(order, today) : { outcome: 'none', orderNumber: digits };
 }
 
 /** A short text result for the model. The `say` line is the status to speak. */
 export function describeLookup(result: LookupResult, shown: boolean): string {
   switch (result.outcome) {
-    case 'need_name':
-      return 'No name or order number was given. Ask the caller for the name on the order.';
+    case 'need_number':
+      return 'The caller has not said an order number yet. Ask for their three-digit order number.';
+    case 'incomplete':
+      return `Heard the digits ${result.heard.split('').join(' ')}, which is not one three-digit order number. Ask them to say just the three-digit number.`;
     case 'none':
-      return 'No order matched. Ask the caller to repeat their name.';
-    case 'many':
-      return `More than one customer matched: ${result.names.join(', ')}. Ask which person is calling. Do not guess.`;
-    case 'mismatch':
-      return 'That order number is not under the name they gave. Ask them to repeat the name or the number. Do not read out anyone else\'s order.';
+      return `There is no order ${result.orderNumber.split('').join(' ')}. Say you could not find that number and ask them to say it again.`;
     case 'found':
       return [
         'outcome: found',

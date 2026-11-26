@@ -96,6 +96,19 @@ export function hasToolCalls(message: Pick<Message, 'tool_calls'>): boolean {
   }
 }
 
+const normalize = (text: string) => text.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+
+/**
+ * True when `reply` only repeats what the agent said in its previous message,
+ * as in a preamble "Hi! What's your order number?" followed by a rejected tool
+ * call and then "What's your order number?". The caller should hear it once.
+ */
+export function repeatsPrevious(reply: string, previous: string | undefined): boolean {
+  if (!previous) return false;
+  const now = normalize(reply);
+  return now.length > 0 && normalize(previous).includes(now);
+}
+
 const errorText = (error: unknown) => (error instanceof Error ? error.message : String(error));
 
 async function endCall(state: ThreadState, reason: string) {
@@ -139,7 +152,19 @@ export async function runVoiceTurn(
   }
 
   // ── Speak ──────────────────────────────────────────────────────────────
-  const spoken = await speak(streams, voice.tts, text, { bargeIn: true });
+  // A reply that only repeats the preamble the caller just heard (no caller
+  // words in between) is not spoken again. Its turn still listens.
+  const { messages: recent } = await state.getMessages({ limit: 6, order: 'desc' });
+  const since = recent.filter((m) => m.id !== message.id);
+  const lastCaller = since.findIndex((m) => m.role === 'user');
+  const previous = since.find((m, i) => m.role === 'assistant' && m.content?.trim() && (lastCaller < 0 || i < lastCaller));
+  let spoken: Awaited<ReturnType<typeof speak>>;
+  if (repeatsPrevious(text, previous?.content ?? undefined)) {
+    console.info('[voice] reply repeats the preamble the caller just heard; not speaking it twice');
+    spoken = { ok: true, playedMs: 0, interrupted: false, firstAudioMs: null };
+  } else {
+    spoken = await speak(streams, voice.tts, text, { bargeIn: true });
+  }
   if (!spoken.ok) {
     await endCall(state, `Could not speak into the room: ${spoken.error}`);
     return;
