@@ -19,7 +19,17 @@ export const CAPABILITY = {
   listen: 'livekit.listen',
   /** The host leaves the room once queued audio has played. */
   hangup: 'livekit.hangup',
+  /** The host shows a card on the caller's screen via LiveKit RPC `show_order`. */
+  show: 'livekit.show',
+  /** The host shows a line of transcript on the caller's screen. Fire and forget. */
+  caption: 'livekit.caption',
 } as const;
+
+/** LiveKit data topic the desk listens on for captions, presence, and latency. */
+export const CALL_EVENTS_TOPIC = 'sa-voice.events';
+
+/** RPC method the support desk registers. The host calls it with the order card JSON. */
+export const SHOW_ORDER_RPC = 'show_order';
 
 /** All audio on the wire is signed 16-bit little-endian, mono. */
 export const PCM_FORMAT = 'pcm_s16le' as const;
@@ -69,6 +79,21 @@ export type ListenMetadata = {
 export type HangupMetadata = {
   protocol: typeof VOICE_PROTOCOL;
   reason: string;
+};
+
+export type ShowMetadata = {
+  protocol: typeof VOICE_PROTOCOL;
+  /** Order card JSON. The host forwards it unchanged to the caller's screen. */
+  card: Record<string, unknown>;
+};
+
+export type CaptionMetadata = {
+  protocol: typeof VOICE_PROTOCOL;
+  /** Only the caller's words need this; the host captions agent speech from SpeakMetadata.text. */
+  role: 'caller';
+  text: string;
+  /** Speech-to-text time for this utterance, shown next to the latency readout. */
+  sttMs?: number;
 };
 
 /** Bytes per millisecond of mono s16le audio at a given rate. */

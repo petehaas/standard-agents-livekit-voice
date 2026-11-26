@@ -13,8 +13,8 @@ flowchart LR
     B -- transcript --> A
   end
   subgraph Host["Execution host (Node)"]
-    H["bridge client<br/>livekit.speak · livekit.listen · livekit.hangup"]
-    V["VAD · turn detection · barge-in"]
+    H["bridge client<br/>livekit.speak · listen · show · caption · hangup"]
+    V["Silero VAD · endpointing · barge-in"]
   end
   B <-- "runtime streams<br/>(PCM bytes)" --> H
   H <--> V
@@ -27,9 +27,12 @@ flowchart LR
 1. **Side A** is an ordinary prompt. It reads a transcript and writes a short text reply. It doesn't know it's on a call.
 2. **Side B** is a handler (`voice_caller`), which is deterministic code with no model. On each reply it:
    - calls TTS from the Worker and **pipes the PCM into a `livekit.speak` stream** as it arrives, so playback starts before synthesis ends;
-   - opens `livekit.listen` and reads the caller's next utterance back as PCM;
-   - runs STT and injects the transcript as side B's message, which starts side A's next turn.
-3. The **host** plays audio into the room, runs voice activity detection on the caller's mic, decides where the caller's turn ends, and handles barge-in.
+   - opens `livekit.listen` and reads the caller's next utterance back as PCM. With Deepgram, that audio is **transcribed live while the caller is still talking**, so the end of their turn leaves only a short flush;
+   - keeps listening when the words trail off ("Okay, and…"), so a pause mid-sentence is not answered as a whole turn;
+   - injects the transcript as side B's message, which starts side A's next turn.
+3. The **host** plays audio into the room, runs Silero voice activity detection on the caller's mic, decides where the caller's turn ends, and handles barge-in.
+
+A reply that also calls a tool ("Let me check that." plus `lookup_order`) is a preamble: side B speaks it but does not listen, because side A's real reply is still coming.
 
 ### Barge-in
 
@@ -43,7 +46,7 @@ If the caller talks over the agent, the host stops playback within about 240 ms 
 
 ## Quick start
 
-You need Node 22+, a LiveKit project ([LiveKit Cloud](https://cloud.livekit.io) works on the free tier), and an OpenAI API key (for the reply model, STT, and TTS).
+You need Node 22+, a LiveKit project ([LiveKit Cloud](https://cloud.livekit.io) works on the free tier), and an OpenAI API key for the reply model. Speech can use the same OpenAI key, or a [Deepgram](https://deepgram.com) key for the lowest latency (see [Choosing speech providers](#choosing-speech-providers)).
 
 ### 1. Start the agent
 
@@ -53,12 +56,13 @@ npm install
 cp .dev.vars.example .dev.vars
 ```
 
-Fill in `.dev.vars`:
+Fill in `.dev.vars`. For the key, run `openssl rand -hex 16` in a terminal and paste the 32-character output; the file does not run commands.
 
-```bash
-ENCRYPTION_KEY=$(openssl rand -hex 16)   # exactly 32 characters
-SUPER_ADMIN_PASSWORD=pick-a-local-password
+```dotenv
+ENCRYPTION_KEY=<output of openssl rand -hex 16>
+SUPER_ADMIN_PASSWORD=<a password you choose>  # local admin UI only
 OPENAI_API_KEY=sk-...
+# DEEPGRAM_API_KEY=...   optional, for the fastest turns
 ```
 
 ```bash
@@ -71,19 +75,18 @@ npm run dev    # http://127.0.0.1:5173, sign in as "admin" with that password
 cd host
 npm install
 cp .env.example .env    # set SA_ADMIN_PASSWORD and the three LIVEKIT_* values
-npm run sync-keys       # copies the speech keys from agent/.dev.vars into the runtime's variables
 npm run probe           # optional: checks the stream plumbing, no LiveKit or API calls
-npm start
+npm start               # first copies the speech keys from agent/.dev.vars into the runtime
 ```
 
 `npm start` creates a thread, attaches as its execution host, joins a LiveKit room, and prints a link:
 
 ```
-  Join the call:
-  https://meet.livekit.io/custom?liveKitUrl=...&token=...
+  Open the support desk:
+  http://127.0.0.1:8787/
 ```
 
-Open it, allow the microphone, and the agent greets you. The admin UI's thread view shows the transcript and tool calls as you talk, and the host terminal logs every speak, listen, and barge-in with timestamps.
+Open it and press Start call. The page asks for the microphone only and shows the agent's orb. Ask about an order by name: Maya Chen, Andre Walsh, Priya Shah, Jonah Ellis, Lena Okonkwo, or Samir Haddad. When the agent finds one, its card appears on the page, and you can ask follow-ups (when it arrives, where it ships, what it cost). The admin UI's thread view shows the transcript and tool calls as you talk, and the host terminal logs every speak, listen, and order card.
 
 `npm run probe` output looks like this:
 
@@ -95,70 +98,120 @@ Open it, allow the microphone, and the agent greets you. The admin UI's thread v
 }
 ```
 
+## The support desk
+
+The desk at `http://127.0.0.1:8787/` is the caller's side of the call. It asks for the microphone only and shows:
+
+- **the agent's orb**, a video track the host renders, with an audio-reactive ring drawn in the browser (amber while the agent speaks, cyan while you do);
+- **live captions** for both sides. A reply you talked over is marked as interrupted;
+- **the response time** of each turn in the header: from the end of your turn to the agent's first audio, which is the gap the caller actually hears. Green under 1.2 s, amber under 2 s;
+- **the order card**, when `lookup_order` finds one.
+
+Captions and timings travel as LiveKit data packets on the `sa-voice.events` topic. Nothing in the call depends on them.
+
 ## Configuration
 
-**Speech providers.** These are agent-side, read through `state.env()`, so they can be set per instance, per user, or per thread:
+### Choosing speech providers
+
+| Setup | Keys | Feel |
+| --- | --- | --- |
+| OpenAI for everything (default) | `OPENAI_API_KEY` | Simplest. Steerable, expressive voice. About 2–2.5 s per plain answer in our tests. |
+| Deepgram STT + TTS, OpenAI reply model | `OPENAI_API_KEY`, `DEEPGRAM_API_KEY` | Fastest. Live transcription and about 0.3 s to first audio. About 1.5–1.8 s per plain answer. |
+| ElevenLabs TTS | `ELEVENLABS_API_KEY`, `ELEVENLABS_VOICE_ID` | Most expressive voices. |
+
+Put keys in `agent/.dev.vars`; `npm start` in `host/` copies them into the runtime as instance variables. Choose providers in `host/.env`, which passes the choice (never a key) to the thread:
+
+```bash
+VOICE_STT_PROVIDER=deepgram
+VOICE_TTS_PROVIDER=deepgram
+```
+
+If Deepgram's live socket fails during a turn, that turn falls back to its batch endpoint. The `voice_heard` event reports `sttMode: live | batch`.
+
+### Speech settings
+
+These are agent-side, read through `state.env()`, so they can be set per instance, per user, or per thread:
 
 | Variable | Values | Default |
 | --- | --- | --- |
 | `VOICE_STT_PROVIDER` | `openai`, `deepgram` | `openai` |
-| `VOICE_TTS_PROVIDER` | `openai`, `elevenlabs` | `openai` |
-| `OPENAI_API_KEY` / `DEEPGRAM_API_KEY` / `ELEVENLABS_API_KEY` | keys | none |
-| `ELEVENLABS_VOICE_ID` | voice id | none (required for ElevenLabs) |
-| `OPENAI_STT_MODEL`, `OPENAI_TTS_MODEL`, `OPENAI_TTS_VOICE`, `DEEPGRAM_MODEL`, `ELEVENLABS_MODEL` | model names | `gpt-4o-mini-transcribe`, `gpt-4o-mini-tts`, `coral`, `nova-3`, `eleven_flash_v2_5` |
+| `VOICE_TTS_PROVIDER` | `openai`, `elevenlabs`, `deepgram` | `openai` |
+| `VOICE_STT_LANGUAGE` | language code | `en` (short clips are otherwise often transcribed as another language) |
+| `VOICE_STT_KEYTERMS` | comma-separated words | the demo's customer names. Passed to OpenAI as a prompt and to Deepgram as `keyterm` |
+| `OPENAI_TTS_INSTRUCTIONS` | delivery direction | a warm, upbeat support voice |
+| `OPENAI_STT_MODEL`, `OPENAI_TTS_MODEL`, `OPENAI_TTS_VOICE` | | `gpt-4o-mini-transcribe`, `gpt-4o-mini-tts`, `coral` |
+| `DEEPGRAM_MODEL`, `DEEPGRAM_TTS_MODEL` | | `nova-3`, `aura-2-thalia-en` |
+| `ELEVENLABS_MODEL` | | `eleven_flash_v2_5` |
 
-To use Deepgram and ElevenLabs, add their keys to `agent/.dev.vars`, run `npm run sync-keys` again, and set `VOICE_STT_PROVIDER` / `VOICE_TTS_PROVIDER` in `host/.env`. The host passes those choices (never keys) as thread env.
+The reply model is set in `agent/agents/models/voice_fast.ts`. It is the largest remaining share of each turn's latency, so a faster model is the next lever.
 
-**Turn taking.** These are host-side, in `host/.env`:
+### Turn taking
+
+These are host-side, in `host/.env`:
 
 | Variable | Default | Notes |
 | --- | --- | --- |
-| `VAD_MARGIN_DB` | `12` | How far above the learned noise floor speech must be |
-| `VAD_MIN_SPEECH_DB` | `-48` | Lower it for soft-spoken callers |
-| `TURN_MIN_SPEECH_MS` | `160` | Speech needed before a turn starts (filters clicks and coughs) |
+| `VAD_THRESHOLD` | `0.5` | Silero speech probability. Raise it if background noise interrupts the agent |
+| `TURN_MIN_SPEECH_MS` | `240` | Speech needed before a turn starts (filters clicks and coughs) |
 | `TURN_PREROLL_MS` | `300` | Audio kept from before the detected start |
-| `BARGE_IN` / `BARGE_IN_MS` | `on` / `240` | Turn off for speakerphones without echo cancellation |
+| `BARGE_IN` / `BARGE_IN_MS` | `on` / `480` | Turn off for speakerphones without echo cancellation |
+| `VAD_MARGIN_DB`, `VAD_MIN_SPEECH_DB` | `12`, `-48` | Only used by the loudness fallback, if Silero fails to load |
 
-The end-of-turn silence window (700 ms) is chosen by the agent, in `src/voice/turn.ts`, because how long to wait is a conversation-design decision.
+The end-of-turn silence window (400 ms) and the trailing-word check are chosen by the agent, in `agent/src/voice/turn.ts`, because how long to wait is a conversation-design decision.
 
 ## Layout
 
 ```
-agent/                         Standard Agents Builder project
-  agents/agents/voice_concierge.ts   side A prompt + side B voice handler
-  agents/handlers/voice_caller.ts    the voice side (calls src/voice/turn.ts)
-  agents/prompts/voice_concierge.ts  spoken-style prompt; knows about interruptions
-  agents/tools/                      save_note, end_call
-  agents/agents/stream_probe.ts      keyless self-test agent
-  src/voice/protocol.ts              the capability contract, shared with the host
-  src/voice/streams.ts               runtime side of speak / listen / hangup
-  src/voice/providers.ts             OpenAI, Deepgram, ElevenLabs over fetch
-host/                          Node execution host
-  src/bridge.ts                      execution-host side of the runtime stream protocol
-  src/capabilities/                  speak (playback + barge-in), listen (endpointing), hangup
-  src/mic.ts, src/vad.ts             20 ms framing, VAD, pre-roll ring buffer
-  src/room.ts                        LiveKit room, agent voice track, caller mic
-docs/bridge-protocol.md        how a host attaches to Builder, and spec notes
+agent/                               Standard Agents Builder project
+  agents/agents/voice_concierge.ts     side A prompt + side B voice handler
+  agents/handlers/voice_caller.ts      the voice side (calls src/voice/turn.ts)
+  agents/prompts/voice_concierge.ts    spoken-style prompt; knows about interruptions
+  agents/models/voice_fast.ts          the reply model
+  agents/tools/                        lookup_order, end_call
+  agents/agents/stream_probe.ts        keyless self-test agent
+  src/orders.ts                        the demo order book and name matching
+  src/voice/protocol.ts                the capability contract, shared with the host
+  src/voice/turn.ts                    one voice turn: speak, listen, transcribe, inject
+  src/voice/streams.ts                 runtime side of speak / listen / show / caption / hangup
+  src/voice/providers.ts               OpenAI, Deepgram, ElevenLabs over fetch and WebSocket
+host/                                Node execution host
+  src/bridge.ts                        execution-host side of the runtime stream protocol
+  src/capabilities/                    speak (playback + barge-in), listen (endpointing), show, caption, hangup
+  src/mic.ts, src/silero.ts, src/vad.ts  20 ms framing, Silero VAD, loudness fallback, pre-roll
+  src/room.ts                          LiveKit room, agent voice and orb tracks, caller mic, data events
+  src/events.ts                        captions and voice-to-voice timing
+  src/desk.ts, desk/                   the caller's web page
+docs/bridge-protocol.md              how a host attaches to Builder, and spec notes
 ```
 
 ## Tests
 
 ```bash
-cd host && npm test     # 15 tests, about 2 s
+cd host && npm test     # 30 tests, a few seconds
+cd host && npm run typecheck
+cd agent && npm run typecheck
 ```
 
-The suite runs the agent's real runtime-side stream code against the host's real bridge client over a WebSocket. A mock runtime copies the Builder's stream semantics. The suite covers full playback, barge-in with TTS cancellation, pre-roll after an interruption, endpointing, silence timeouts, refused capabilities, runtime aborts, and TTS failures.
+The suite runs the agent's real runtime-side stream code against the host's real bridge client over a WebSocket. A mock runtime copies the Builder's stream semantics. It covers playback, barge-in with TTS cancellation, pre-roll after an interruption, endpointing, silence timeouts, refused capabilities, runtime aborts, TTS failures, Silero on recorded speech, order lookup and name matching, Deepgram live transcription against a fake socket (including fallback), and the turn-level guards (trailing words, tool preambles, duplicated replies).
 
-Everything was also run against a real Standard Agents Builder 0.45.10 dev server: `npm run probe`, plus a scripted conversation through the production `runVoiceTurn` with a simulated barge-in. That run confirmed the history rewrite, the transcript injection, `end_call`, and hangup.
+`npm run probe` checks the stream plumbing against a real Builder dev server without LiveKit or any API calls.
 
 ## Limitations and next steps
 
-- **Turn detection is energy-based.** It's simple and dependency-free. Silero VAD or LiveKit's semantic turn detector would be the production choice. The capability handlers only consume a per-frame speech flag, so either drops in.
-- **STT is batch.** The utterance is transcribed after the turn ends. Streaming STT from the Worker (for example, a Deepgram WebSocket fed while `listen` is still open) would cut about a second of latency.
+- **The reply is spoken only once it is fully written.** Side B receives side A's message when it completes, so TTS cannot start on the first sentence. Streaming message deltas to handlers would be a useful spec addition.
+- **A lookup costs two model calls**: one to call the tool, one to phrase the result.
+- **The trailing-word check is a heuristic.** A pause after a complete-sounding phrase still ends the turn. LiveKit's semantic turn detector would be the production choice.
+- **Live STT is Deepgram only.** OpenAI transcribes after the turn ends.
 - **The interrupted-reply estimate is proportional.** It uses played time over total audio time. TTS word timestamps would make it exact.
 - **One caller per room** and one call per host process.
 - **The bridge protocol is the Builder's, not the spec's.** See [docs/bridge-protocol.md](docs/bridge-protocol.md).
 - The Standard Agents Builder runtime is licensed for local development and for production on Standard Agents hosting. This demo runs locally.
+
+## Third-party components
+
+- [Silero VAD](https://github.com/snakers4/silero-vad) (`host/models/silero_vad.onnx`), MIT license.
+- The product photos in `host/desk/products/` are AI-generated for this demo and are shared under the repository's MIT license.
+- `@livekit/noise-cancellation-node` filters background noise on the caller's mic. It works with LiveKit Cloud; elsewhere the host logs a warning and continues without it.
 
 ## License
 

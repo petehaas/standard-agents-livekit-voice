@@ -1,21 +1,20 @@
 # Copy to .dev.vars and fill in. .dev.vars is ignored by git.
 #
-# The fastest path: copy the .dev.vars that `npx @standardagents/cli@latest create`
-# wrote for your account (it holds ENCRYPTION_KEY and STANDARD_AGENTS_API_KEY).
-
 # Local session and data encryption: exactly 32 characters, e.g. `openssl rand -hex 16`
 ENCRYPTION_KEY=
 
 # Lets you sign in to the local admin UI without a platform account (user "admin").
-# SUPER_ADMIN_PASSWORD=
+SUPER_ADMIN_PASSWORD=
 
-# Standard Agents platform key: covers the reply model through the platform.
-STANDARD_AGENTS_API_KEY=
+# OpenAI: the reply model, and speech too unless you choose Deepgram or ElevenLabs.
+OPENAI_API_KEY=
 
-# Or skip the platform key and use your own OpenAI key for the reply model.
-# OPENAI_API_KEY=
+# Optional: a Standard Agents platform key, if you use the platform.
+# STANDARD_AGENTS_API_KEY=
 
-# Note: the voice handler reads its STT/TTS keys through state.env(), which
-# resolves thread, agent, user, and instance variables, not this file. Set
-# OPENAI_API_KEY (or DEEPGRAM_API_KEY / ELEVENLABS_API_KEY) as an instance
-# variable in the admin UI. See the README.
+# Speech keys. The voice handler reads these through state.env(), which does
+# not see this file; `npm start` in host/ copies them into the runtime as
+# instance variables. See "Choosing speech providers" in the README.
+# DEEPGRAM_API_KEY=
+# ELEVENLABS_API_KEY=
+# ELEVENLABS_VOICE_ID=

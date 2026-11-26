@@ -5,6 +5,7 @@
   "type": "module",
   "description": "A Standard Agents execution host that bridges runtime streams to a LiveKit room.",
   "scripts": {
+    "prestart": "tsx src/sync-keys.ts",
     "start": "tsx src/index.ts",
     "probe": "tsx src/probe.ts",
     "sync-keys": "tsx src/sync-keys.ts",
@@ -12,9 +13,12 @@
     "test": "tsx --test test/*.test.ts"
   },
   "dependencies": {
+    "@livekit/noise-cancellation-node": "0.3.1",
     "@livekit/rtc-node": "^1.2.3",
     "dotenv": "^18.0.0",
+    "livekit-client": "2.16.1",
     "livekit-server-sdk": "^2.20.0",
+    "onnxruntime-node": "1.24.3",
     "ws": "^8.18.0"
   },
   "devDependencies": {

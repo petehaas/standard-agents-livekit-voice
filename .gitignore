@@ -8,3 +8,4 @@ agent/.agents/*
 !agent/.agents/skills/
 recordings/
 .DS_Store
+.vscode/

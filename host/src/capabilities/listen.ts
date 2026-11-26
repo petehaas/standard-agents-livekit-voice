@@ -2,6 +2,8 @@ import { LISTEN_SAMPLE_RATE, VOICE_PROTOCOL, type ListenMetadata } from '../../.
 import type { HostStream } from '../bridge.js';
 import { log } from '../log.js';
 import { FRAME_MS, framesToBytes, type MicTap } from '../mic.js';
+import type { Presence } from '../aura.js';
+import type { TurnClock } from '../events.js';
 
 export interface ListenOptions {
   /** Speech must last this long before a turn starts. Filters coughs and clicks. */
@@ -12,12 +14,23 @@ export interface ListenOptions {
 
 /** Send audio to the runtime in batches of this size, rather than one frame per message. */
 const BATCH_MS = 100;
+/**
+ * A burst shorter than this is a click or a bark, not a turn. Drop it and
+ * keep listening. Real replies, including a short name, run longer.
+ */
+const FALSE_START_MS = 240;
 
 /**
  * Serve `livekit.listen`: stream the caller's next utterance to the runtime,
  * then end the stream. End with zero bytes if no speech starts in time.
  */
-export async function serveListen(stream: HostStream, mic: MicTap, options: ListenOptions) {
+export async function serveListen(
+  stream: HostStream,
+  mic: MicTap,
+  options: ListenOptions,
+  presence?: Presence,
+  clock?: TurnClock,
+) {
   const meta = stream.metadata as Partial<ListenMetadata>;
   if (meta.protocol !== VOICE_PROTOCOL) throw new Error(`Unsupported voice protocol ${String(meta.protocol)}.`);
   if (meta.sampleRate !== LISTEN_SAMPLE_RATE || meta.format !== 'pcm_s16le') {
@@ -27,9 +40,11 @@ export async function serveListen(stream: HostStream, mic: MicTap, options: List
   const noSpeechTimeoutMs = meta.noSpeechTimeoutMs ?? 8_000;
   const maxUtteranceMs = meta.maxUtteranceMs ?? 30_000;
 
+  presence?.set('listening');
   await new Promise<void>((resolve) => {
     let speaking = false;
     let utteranceMs = 0;
+    let speechMs = 0;
     let silenceMs = 0;
     let batch: Int16Array[] = [];
     let done = false;
@@ -47,7 +62,10 @@ export async function serveListen(stream: HostStream, mic: MicTap, options: List
       unsubscribe();
       clearInterval(timer);
       flush();
-      log.info('listen', speaking ? `${why}: ${(utteranceMs / 1000).toFixed(1)} s of speech` : why);
+      // Speech is in. Stay visibly busy while the reply is transcribed and written.
+      presence?.set(speechMs > 0 ? 'thinking' : 'idle');
+      clock?.callerFinished();
+      log.info('listen', speaking ? `${why}: ${(speechMs / 1000).toFixed(1)} s of speech` : why);
       resolve();
     };
 
@@ -56,6 +74,7 @@ export async function serveListen(stream: HostStream, mic: MicTap, options: List
       // Include the speech that triggered the start plus a little before it.
       batch.push(...lead.map((frame) => frame.samples));
       utteranceMs = lead.length * FRAME_MS;
+      speechMs = lead.reduce((ms, frame) => ms + (frame.speech ? FRAME_MS : 0), 0);
       log.info('listen', 'caller is speaking');
     };
 
@@ -67,10 +86,21 @@ export async function serveListen(stream: HostStream, mic: MicTap, options: List
       }
       batch.push(frame.samples);
       utteranceMs += FRAME_MS;
+      if (frame.speech) speechMs += FRAME_MS;
       silenceMs = frame.speech ? 0 : silenceMs + FRAME_MS;
-      if (batch.length * FRAME_MS >= BATCH_MS) flush();
-      if (silenceMs >= endSilenceMs) finish('end of turn');
-      else if (utteranceMs >= maxUtteranceMs) finish('utterance limit');
+      if (batch.length * FRAME_MS >= BATCH_MS && speechMs >= FALSE_START_MS) flush();
+      if (silenceMs >= endSilenceMs) {
+        if (speechMs < FALSE_START_MS) {
+          speaking = false;
+          utteranceMs = 0;
+          speechMs = 0;
+          silenceMs = 0;
+          batch = [];
+          log.info('listen', 'ignored a short noise burst');
+          return;
+        }
+        finish('end of turn');
+      } else if (utteranceMs >= maxUtteranceMs) finish('utterance limit');
     });
 
     const timer = setInterval(() => {

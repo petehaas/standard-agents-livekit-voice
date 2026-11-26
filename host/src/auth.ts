@@ -8,11 +8,16 @@ export async function resolveToken(baseUrl: string): Promise<string> {
   const password = process.env.SA_ADMIN_PASSWORD;
   if (!password) throw new Error('Set SA_ADMIN_PASSWORD (or SA_API_KEY) in host/.env.');
 
-  const response = await fetch(new URL('/api/auth/login', baseUrl), {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ username: 'admin', password }),
-  });
+  let response: Response;
+  try {
+    response = await fetch(new URL('/api/auth/login', baseUrl), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username: 'admin', password }),
+    });
+  } catch {
+    throw new Error(`Can't reach the agent dev server at ${baseUrl}. Start it first: cd agent && npm run dev`);
+  }
   const body = (await response.json().catch(() => ({}))) as { token?: string; error?: string };
   if (!response.ok || !body.token) {
     throw new Error(

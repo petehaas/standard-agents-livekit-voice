@@ -1,0 +1,27 @@
+graph LR
+  desk["Support desk<br/>mic, orb, order card"]
+  room["LiveKit Cloud"]
+  host["Execution host<br/>Krisp, Silero, turns"]
+  voice["Voice turn<br/>speak, then listen"]
+  stt["OpenAI transcribe<br/>gpt-4o-mini-transcribe"]
+  agent["Order agent<br/>gpt-6-luna"]
+  book["Local order book"]
+  tts["OpenAI voice<br/>gpt-4o-mini-tts"]
+
+  desk -->|microphone| room
+  room -->|caller audio| host
+  host -->|16 kHz turn| voice
+  voice -->|after the pause| stt
+  stt -->|English transcript| agent
+  agent -->|one sentence| tts
+  tts -->|24 kHz audio| host
+  host -->|voice and orb| room
+  room -->|what you hear and see| desk
+  agent -->|name just said| book
+  book -->|order card| host
+  host -->|show_order| desk
+
+  class desk,room,host,voice,book local
+  class stt,agent,tts openai
+  classDef local fill:#f7f4ea,stroke:#3d3a34,color:#1c1915
+  classDef openai fill:#e7f0ff,stroke:#1d4ed8,color:#1e3a8a

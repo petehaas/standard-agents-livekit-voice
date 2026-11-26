@@ -4,7 +4,7 @@
  * include the speech that came just before it started (pre-roll), including
  * the words that interrupted the agent.
  */
-import { EnergyVad, type VadOptions } from './vad.js';
+import { EnergyVad, type SpeechClassifier, type SpeechDecision, type VadOptions } from './vad.js';
 
 export const MIC_SAMPLE_RATE = 16_000;
 export const FRAME_MS = 20;
@@ -19,8 +19,12 @@ export interface MicFrame {
 
 type Listener = (frame: MicFrame) => void;
 
+function isClassifier(value: VadOptions | SpeechClassifier): value is SpeechClassifier {
+  return typeof (value as SpeechClassifier).process === 'function';
+}
+
 export class MicTap {
-  private readonly vad: EnergyVad;
+  private readonly vad: SpeechClassifier;
   private readonly ring: MicFrame[] = [];
   private readonly ringFrames: number;
   private readonly listeners = new Set<Listener>();
@@ -33,29 +37,44 @@ export class MicTap {
   /** Frame index where an interrupting turn began, set on barge-in. */
   private turnStartFrame: number | null = null;
 
-  constructor(vadOptions?: VadOptions, ringMs = 2_000) {
-    this.vad = new EnergyVad(vadOptions);
+  constructor(vad?: VadOptions | SpeechClassifier, ringMs = 2_000) {
+    this.vad = vad && isClassifier(vad) ? vad : new EnergyVad(vad);
     this.ringFrames = Math.ceil(ringMs / FRAME_MS);
   }
 
-  /** Feed 16 kHz mono samples of any length. */
-  push(samples: Int16Array) {
+  /**
+   * Feed 16 kHz mono samples of any length.
+   * Returns a promise when the classifier runs one frame at a time (Silero).
+   * The loudness detector finishes before this returns.
+   */
+  push(samples: Int16Array): void | Promise<void> {
     let input = samples;
     if (this.carry.length > 0) {
       input = new Int16Array(this.carry.length + samples.length);
       input.set(this.carry, 0);
       input.set(samples, this.carry.length);
     }
+    if (this.vad.sequential) return this.pushInOrder(input);
     let offset = 0;
     while (input.length - offset >= FRAME_SAMPLES) {
-      this.frame(input.slice(offset, offset + FRAME_SAMPLES));
+      this.emit(input.slice(offset, offset + FRAME_SAMPLES));
       offset += FRAME_SAMPLES;
     }
     this.carry = input.slice(offset);
   }
 
-  private frame(samples: Int16Array) {
-    const { speech: rawSpeech, db } = this.vad.process(samples);
+  private async pushInOrder(input: Int16Array) {
+    let offset = 0;
+    while (input.length - offset >= FRAME_SAMPLES) {
+      const frame = input.slice(offset, offset + FRAME_SAMPLES);
+      offset += FRAME_SAMPLES;
+      this.emit(frame, await this.vad.process(frame));
+    }
+    this.carry = input.slice(offset);
+  }
+
+  private emit(samples: Int16Array, decision?: SpeechDecision) {
+    const { speech: rawSpeech, db } = decision ?? (this.vad.process(samples) as SpeechDecision);
     this.raw.push(rawSpeech);
     if (this.raw.length > 3) this.raw.shift();
     const speech = this.raw.filter(Boolean).length >= 2;

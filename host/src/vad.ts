@@ -1,10 +1,22 @@
 /**
- * An energy-based voice activity detector with an adaptive noise floor.
+ * Loudness-based voice activity, with an adaptive noise floor.
  *
- * It is deliberately simple and dependency-free, so the demo runs anywhere.
- * For production, swap in Silero VAD or LiveKit's turn-detector model; the
- * capability handlers only consume the per-frame `speech` boolean.
+ * Anything loud counts as speech, including a dog bark. Live calls use
+ * Silero instead (`silero.ts`). Tests and the probe keep this one, because
+ * they drive the microphone with a sine tone. Handlers only read `speech`.
  */
+export interface SpeechDecision {
+  speech: boolean;
+  db: number;
+}
+
+export interface SpeechClassifier {
+  process(samples: Int16Array): SpeechDecision | Promise<SpeechDecision>;
+  readonly floorDb: number;
+  /** Frames must be classified one at a time, in order. */
+  readonly sequential?: boolean;
+}
+
 export interface VadOptions {
   /** Speech must be this many dB above the noise floor. */
   marginDb: number;
@@ -26,7 +38,7 @@ export function frameDb(samples: Int16Array): number {
   return rms > 0 ? Math.max(-100, 20 * Math.log10(rms)) : -100;
 }
 
-export class EnergyVad {
+export class EnergyVad implements SpeechClassifier {
   private noiseFloorDb = -60;
   private frames = 0;
 
