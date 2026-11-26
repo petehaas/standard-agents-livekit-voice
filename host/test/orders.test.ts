@@ -1,71 +1,76 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { callerSupplied, lookupOrder } from '../../agent/src/orders.ts';
+import { describeLookup, lookupOrder, ORDERS, spokenDigits } from '../../agent/src/orders.ts';
 import { serveShow } from '../src/capabilities/show.ts';
 import type { HostStream } from '../src/bridge.ts';
 
 const today = new Date(2026, 10, 25); // Wednesday, November 25, 2026
 
-test('Maya Chen is in process and due two days from today', () => {
-  const found = lookupOrder({ customerName: 'my name is Maya' }, today);
+test('every order has a unique three-digit number', () => {
+  const numbers = ORDERS.map((order) => order.orderNumber);
+  assert.deepEqual(numbers, ['111', '222', '333', '444', '555']);
+  assert.equal(new Set(numbers).size, numbers.length);
+});
+
+test('order 111 is in process and due two days from today', () => {
+  const found = lookupOrder({ spoken: 'My order number is 111.' }, today);
   assert.equal(found.outcome, 'found');
   if (found.outcome !== 'found') return;
-  assert.equal(found.orderNumber, '1842');
+  assert.equal(found.customerName, 'Maya Chen');
   assert.equal(found.status, 'in_process');
   assert.equal(found.deliveryRelative, 'in 2 days');
   assert.equal(found.deliveryDate, 'Friday, November 27');
   assert.equal(found.card.steps.map((step) => step.state).join(','), 'done,current,upcoming,upcoming');
-  assert.equal(found.card.title, 'Linen throw blanket');
-  assert.equal(found.card.detail, 'Oatmeal, 50 by 60 inches');
   assert.equal(found.card.total, '$148');
   assert.equal(found.card.shipsTo, 'Brooklyn');
-  assert.equal(found.card.placedLabel, 'Tuesday, November 24');
   assert.equal(found.card.image, '/products/linen-throw.jpg');
   assert.ok(JSON.stringify(found.card).length < 15_000, 'the card must fit in one LiveKit RPC');
-  assert.match(found.say, /Friday, November 27/);
+  assert.match(found.say, /order 1 1 1/);
   assert.doesNotMatch(found.say, /\$148/);
 });
 
-test('the book has more than the original three orders', () => {
-  const found = lookupOrder({ customerName: 'Jonah Ellis' }, today);
-  assert.equal(found.outcome, 'found');
-  if (found.outcome !== 'found') return;
-  assert.equal(found.orderNumber, '2018');
-  assert.equal(found.item, 'stoneware dinner plates');
-  assert.equal(found.deliveryRelative, 'in 3 days');
-  assert.equal(found.card.image, '/products/dinner-plates.jpg');
-  assert.equal(lookupOrder({ orderNumber: '1695' }, today).outcome, 'found');
+test('spoken forms of an order number become digits', () => {
+  const cases: [string, string][] = [
+    ['111', '111'],
+    ['It is 4 4 4.', '444'],
+    ['one one one', '111'],
+    ['Triple two.', '222'],
+    ['double five five', '555'],
+    ['one eleven', '111'],
+    ['two twenty two', '222'],
+    ['three hundred thirty three', '333'],
+    ['six hundred and sixty six', '666'],
+    ['one to one', '121'],
+    ['Order number for five five five', '555'],
+    ['I want to check my order', ''],
+  ];
+  for (const [said, digits] of cases) assert.equal(spokenDigits(said), digits, said);
 });
 
-test('an order number finds the same customer, and a conflicting name does not', () => {
-  const byNumber = lookupOrder({ orderNumber: '1904' }, today);
-  assert.equal(byNumber.outcome, 'found');
-  if (byNumber.outcome === 'found') assert.equal(byNumber.customerName, 'Andre Walsh');
-
-  const clash = lookupOrder({ customerName: 'Andre Walsh', orderNumber: '1842' }, today);
-  assert.equal(clash.outcome, 'mismatch');
+test('the words the caller said win over the model argument', () => {
+  const found = lookupOrder({ spoken: 'two two two', orderNumber: '111' }, today);
+  assert.equal(found.outcome === 'found' && found.orderNumber, '222');
+  const referBack = lookupOrder({ spoken: 'yes that one', earlier: ['it is 333'], orderNumber: '333' }, today);
+  assert.equal(referBack.outcome === 'found' && referBack.orderNumber, '333');
+  const invented = lookupOrder({ spoken: 'yes that one', earlier: ['hello'], orderNumber: '333' }, today);
+  assert.notEqual(invented.outcome, 'found');
 });
 
-test('unknown names, empty input, and two names stay off the screen', () => {
-  assert.equal(lookupOrder({ customerName: 'Sam Rivera' }, today).outcome, 'none');
-  assert.equal(lookupOrder({}, today).outcome, 'need_name');
-  const many = lookupOrder({ customerName: 'Maya and Andre' }, today);
-  assert.equal(many.outcome, 'many');
-  if (many.outcome === 'many') assert.deepEqual(many.names.sort(), ['Andre Walsh', 'Maya Chen']);
-});
-
-test('a lookup has to use the name the caller just said', () => {
-  assert.equal(callerSupplied('[caller connected]', { customerName: 'Maya Chen' }), 'not_yet');
-  assert.equal(callerSupplied('Jonah Ellis?', { customerName: 'Jonah Ellis' }), 'ok');
-  assert.equal(callerSupplied('Jonah Ellis?', { customerName: 'Maya Chen' }), 'not_said');
-  assert.equal(callerSupplied('order 1904', { orderNumber: '1904' }), 'ok');
-  assert.equal(callerSupplied('Andre Walsh', { customerName: 'Andre', orderNumber: '1842' }), 'not_said');
+test('missing, short, unknown, and noisy numbers stay off the screen', () => {
+  assert.equal(lookupOrder({ spoken: '[caller connected]' }, today).outcome, 'need_number');
+  assert.equal(lookupOrder({ spoken: 'one one' }, today).outcome, 'incomplete');
+  assert.equal(lookupOrder({ spoken: '789' }, today).outcome, 'none');
+  assert.equal(lookupOrder({ spoken: '666' }, today).outcome, 'none');
+  assert.equal(lookupOrder({ spoken: '123456' }, today).outcome, 'incomplete');
+  const extra = lookupOrder({ spoken: 'I bought 2 things, order 444' }, today);
+  assert.equal(extra.outcome === 'found' && extra.orderNumber, '444');
+  assert.match(describeLookup({ outcome: 'none', orderNumber: '789' }, false), /no order 7 8 9/);
 });
 
 test('show forwards the card payload to the caller', async () => {
   let payload = '';
   const stream = {
-    metadata: { protocol: 'sa-voice/0', card: { orderNumber: '1842', item: 'linen throw blanket' } },
+    metadata: { protocol: 'sa-voice/0', card: { orderNumber: '111', item: 'linen throw blanket' } },
   } as unknown as HostStream;
   await serveShow(stream, {
     showOrder: async (body) => {
@@ -73,5 +78,5 @@ test('show forwards the card payload to the caller', async () => {
       return 'shown';
     },
   });
-  assert.equal(JSON.parse(payload).orderNumber, '1842');
+  assert.equal(JSON.parse(payload).orderNumber, '111');
 });

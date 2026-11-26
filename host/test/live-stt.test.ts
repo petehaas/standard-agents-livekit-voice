@@ -98,3 +98,11 @@ test('a reply that also calls a tool is a preamble, not a turn', async () => {
   assert.equal(hasToolCalls({ tool_calls: null }), false);
   assert.equal(hasToolCalls({}), false);
 });
+
+test('a reply that repeats the preamble the caller just heard is not spoken twice', async () => {
+  const { repeatsPrevious } = await import('../../agent/src/voice/turn.ts');
+  const preamble = 'Hi, thanks for calling Harbor Goods. What’s your three-digit order number?';
+  assert.equal(repeatsPrevious('What’s your three-digit order number?', preamble), true);
+  assert.equal(repeatsPrevious('Order 111 shipped yesterday.', preamble), false);
+  assert.equal(repeatsPrevious('What’s your order number?', undefined), false);
+});

@@ -11,7 +11,7 @@ import { defineAgent } from '@standardagents/spec';
 export default defineAgent({
   name: 'voice_concierge',
   title: 'Harbor Goods orders',
-  description: 'Looks up a Harbor Goods order for a caller and shows it on their screen.',
+  description: 'Looks up a Harbor Goods order by its three-digit number and shows it on the caller\'s screen.',
   // maxSteps counts every model call in the session, not per turn. At 6, the
   // call went silent on the caller's fourth question. Keep it well above
   // maxSessionTurns (each turn is one or two steps: an optional lookup, then the reply).
@@ -24,7 +24,7 @@ export default defineAgent({
     VOICE_TTS_PROVIDER: 'openai',
     // Short clips get transcribed as Chinese when the language is left open.
     VOICE_STT_LANGUAGE: 'en',
-    // Words speech-to-text should expect. The customer names in the demo order book.
-    VOICE_STT_KEYTERMS: 'Harbor Goods, Maya Chen, Andre Walsh, Priya Shah, Jonah Ellis, Lena Okonkwo, Samir Haddad',
+    // Words speech-to-text should expect.
+    VOICE_STT_KEYTERMS: 'Harbor Goods, order number',
   },
 });
