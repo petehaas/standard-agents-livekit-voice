@@ -1,6 +1,8 @@
 import type { ThreadState } from '@standardagents/spec';
 import {
+  DEFAULT_TTS_INSTRUCTIONS,
   deepgramStt,
+  deepgramTts,
   elevenlabsTts,
   openaiStt,
   openaiTts,
@@ -27,7 +29,7 @@ async function required(state: ThreadState, name: string, why: string): Promise<
   const value = await optional(state, name);
   if (!value) {
     throw new Error(
-      `Set ${name} (${why}). Add it as an instance variable in the Standard Agents admin UI, or pass it in the thread's env.`,
+      `${name} is not set in the runtime (${why}). Put it in agent/.dev.vars, then run npm start in host/ again; it copies the key over.`,
     );
   }
   return value;
@@ -37,25 +39,34 @@ async function required(state: ThreadState, name: string, why: string): Promise<
  * Build the STT and TTS clients from thread env.
  *
  * Providers come from VOICE_STT_PROVIDER (openai | deepgram) and
- * VOICE_TTS_PROVIDER (openai | elevenlabs). The agent definition sets both to
+ * VOICE_TTS_PROVIDER (openai | elevenlabs | deepgram). The agent definition sets both to
  * openai; a thread env value overrides that per call.
  */
 export async function loadVoiceConfig(state: ThreadState): Promise<VoiceConfig> {
   const sttProvider = (await optional(state, 'VOICE_STT_PROVIDER')) ?? 'openai';
   const ttsProvider = (await optional(state, 'VOICE_TTS_PROVIDER')) ?? 'openai';
 
+  const language = await optional(state, 'VOICE_STT_LANGUAGE');
+  const keyterms = ((await optional(state, 'VOICE_STT_KEYTERMS')) ?? '')
+    .split(',')
+    .map((term) => term.trim())
+    .filter(Boolean);
   let stt: SpeechToText;
   switch (sttProvider) {
     case 'openai':
       stt = openaiStt(
         await required(state, 'OPENAI_API_KEY', 'speech to text'),
         (await optional(state, 'OPENAI_STT_MODEL')) ?? 'gpt-4o-mini-transcribe',
+        language,
+        keyterms,
       );
       break;
     case 'deepgram':
       stt = deepgramStt(
         await required(state, 'DEEPGRAM_API_KEY', 'speech to text'),
         (await optional(state, 'DEEPGRAM_MODEL')) ?? 'nova-3',
+        language,
+        keyterms,
       );
       break;
     default:
@@ -69,6 +80,7 @@ export async function loadVoiceConfig(state: ThreadState): Promise<VoiceConfig> 
         await required(state, 'OPENAI_API_KEY', 'text to speech'),
         (await optional(state, 'OPENAI_TTS_MODEL')) ?? 'gpt-4o-mini-tts',
         (await optional(state, 'OPENAI_TTS_VOICE')) ?? 'coral',
+        (await optional(state, 'OPENAI_TTS_INSTRUCTIONS')) ?? DEFAULT_TTS_INSTRUCTIONS,
       );
       break;
     case 'elevenlabs':
@@ -78,8 +90,14 @@ export async function loadVoiceConfig(state: ThreadState): Promise<VoiceConfig> 
         await required(state, 'ELEVENLABS_VOICE_ID', 'the ElevenLabs voice to speak with'),
       );
       break;
+    case 'deepgram':
+      tts = deepgramTts(
+        await required(state, 'DEEPGRAM_API_KEY', 'text to speech'),
+        (await optional(state, 'DEEPGRAM_TTS_MODEL')) ?? 'aura-2-thalia-en',
+      );
+      break;
     default:
-      throw new Error(`Unknown VOICE_TTS_PROVIDER "${ttsProvider}". Use openai or elevenlabs.`);
+      throw new Error(`Unknown VOICE_TTS_PROVIDER "${ttsProvider}". Use openai, elevenlabs, or deepgram.`);
   }
 
   return { stt, tts };

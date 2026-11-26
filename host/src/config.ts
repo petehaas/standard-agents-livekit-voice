@@ -17,7 +17,7 @@ function number(name: string, fallback: number): number {
 /** Thread env passed through to the agent: provider choices only, never keys. */
 function threadEnv(): Record<string, string> {
   const env: Record<string, string> = {};
-  for (const name of ['VOICE_STT_PROVIDER', 'VOICE_TTS_PROVIDER', 'OPENAI_TTS_VOICE']) {
+  for (const name of ['VOICE_STT_PROVIDER', 'VOICE_TTS_PROVIDER', 'VOICE_STT_LANGUAGE', 'OPENAI_TTS_VOICE', 'OPENAI_TTS_INSTRUCTIONS', 'DEEPGRAM_TTS_MODEL']) {
     if (process.env[name]) env[name] = process.env[name]!;
   }
   return env;
@@ -39,14 +39,16 @@ export function loadConfig() {
     vad: {
       marginDb: number('VAD_MARGIN_DB', 12),
       minSpeechDb: number('VAD_MIN_SPEECH_DB', -48),
+      /** Silero speech probability. Higher ignores more noise and more soft speech. */
+      threshold: number('VAD_THRESHOLD', 0.5),
     },
     turn: {
-      minSpeechMs: number('TURN_MIN_SPEECH_MS', 160),
+      minSpeechMs: number('TURN_MIN_SPEECH_MS', 240),
       prerollMs: number('TURN_PREROLL_MS', 300),
     },
     bargeIn: {
       bargeInEnabled: process.env.BARGE_IN !== 'off',
-      bargeInMs: number('BARGE_IN_MS', 240),
+      bargeInMs: number('BARGE_IN_MS', 480),
     },
   };
 }

@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Harbor Goods · Order support</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #07080c;
+      --ink: #f4f1ea;
+      --muted: #9a958c;
+      --line: rgba(244, 241, 234, 0.14);
+      --card: #12141b;
+      --amber: #e8a15a;
+      --cyan: #7fd0d6;
+      --green: #8fbf9a;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; height: 100%; }
+    body {
+      background:
+        radial-gradient(ellipse at 50% 30%, rgba(80, 70, 50, 0.18), transparent 46%),
+        var(--bg);
+      color: var(--ink);
+      font-family: "Avenir Next", "Segoe UI", sans-serif;
+      min-height: 100%;
+    }
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      padding: 28px 36px 0;
+    }
+    .brand {
+      font-family: Palatino, "Iowan Old Style", Georgia, serif;
+      font-size: 28px;
+      letter-spacing: -0.03em;
+    }
+    .brand span { color: var(--muted); font-family: "Avenir Next", "Segoe UI", sans-serif; font-size: 13px; letter-spacing: 0.14em; text-transform: uppercase; margin-left: 12px; white-space: nowrap; }
+    #status { color: var(--muted); font-size: 14px; }
+    main {
+      min-height: calc(100% - 72px);
+      display: grid;
+      place-items: center;
+      padding: 24px 24px 48px;
+    }
+    .desk { width: min(1040px, 100%); }
+    .stage {
+      width: 100%;
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 36px;
+      justify-items: center;
+      align-items: center;
+    }
+    .stage.has-order { grid-template-columns: minmax(260px, 1fr) minmax(300px, 420px); }
+    @media (max-width: 760px) {
+      .stage.has-order { grid-template-columns: 1fr; }
+      header { padding: 20px 20px 0; }
+    }
+    .orb-wrap { position: relative; width: min(420px, 78vw); aspect-ratio: 1; }
+    .orb, video {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      object-fit: cover;
+      background: transparent;
+    }
+    video { display: none; }
+    video.on { display: block; }
+    .placeholder {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      background:
+        radial-gradient(circle at 50% 48%, #f7f4ff 0 7%, rgba(186, 198, 235, 0.55) 16%, rgba(72, 84, 150, 0.28) 38%, transparent 68%);
+    }
+    .placeholder.off { display: none; }
+    .card {
+      display: none;
+      width: 100%;
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 0 0 18px;
+      overflow: hidden;
+    }
+    .card.on { display: block; }
+    .photo {
+      display: block;
+      width: 100%;
+      aspect-ratio: 4 / 3;
+      height: auto;
+      object-fit: cover;
+      background: #1c1e26;
+    }
+    .card-body { padding: 16px 20px 0; }
+    .who { color: var(--muted); font-size: 12px; letter-spacing: 0.16em; text-transform: uppercase; }
+    .item {
+      font-family: Palatino, "Iowan Old Style", Georgia, serif;
+      font-size: 28px;
+      line-height: 1.15;
+      margin: 10px 0 4px;
+    }
+    .detail { color: var(--muted); font-size: 14px; }
+    .meta {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      margin: 10px 0 14px;
+      font-size: 15px;
+    }
+    .order-no { color: var(--muted); font-size: 14px; margin-bottom: 4px; }
+    .facts { display: grid; gap: 6px; margin-top: 14px; color: var(--muted); font-size: 14px; }
+    .facts strong { color: var(--ink); font-weight: 550; }
+    .pill {
+      display: inline-block;
+      border-radius: 999px;
+      padding: 4px 10px;
+      font-size: 13px;
+      background: rgba(232, 161, 90, 0.16);
+      color: var(--amber);
+    }
+    .pill.shipped { background: rgba(127, 208, 214, 0.14); color: var(--cyan); }
+    .pill.delivered { background: rgba(143, 191, 154, 0.16); color: var(--green); }
+    .steps { display: flex; gap: 8px; margin: 22px 0 14px; }
+    .step { flex: 1; }
+    .bar { height: 3px; border-radius: 99px; background: rgba(244, 241, 234, 0.12); margin-bottom: 8px; }
+    .step.done .bar, .step.current .bar { background: var(--amber); }
+    .step.shipped.done .bar, .step.shipped.current .bar { background: var(--cyan); }
+    .step.delivered.done .bar, .step.delivered.current .bar { background: var(--green); }
+    .step span { display: block; font-size: 11px; color: var(--muted); }
+    .step.current span { color: var(--ink); }
+    .when { font-size: 15px; }
+    .actions { margin-top: 8px; display: flex; justify-content: center; }
+    button {
+      appearance: none;
+      border: 0;
+      background: var(--ink);
+      color: #16140f;
+      font: inherit;
+      font-size: 15px;
+      padding: 12px 22px;
+      border-radius: 999px;
+      cursor: pointer;
+    }
+    button.ghost { background: transparent; color: var(--muted); border: 1px solid var(--line); }
+    button:disabled { opacity: 0.5; cursor: default; }
+    .hint { text-align: center; color: var(--muted); font-size: 14px; max-width: 360px; line-height: 1.45; }
+    .stage.has-order .hint { display: none; }
+
+    /* ── Live layer: audio-reactive ring, captions, latency ── */
+    .viz { position: absolute; inset: -14%; width: 128%; height: 128%; pointer-events: none; }
+    .orb-wrap .placeholder, .orb-wrap video { position: relative; z-index: 1; }
+    .mode {
+      position: absolute; left: 50%; bottom: -6px; transform: translateX(-50%); z-index: 2;
+      font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--muted);
+      padding: 5px 12px; border-radius: 999px; border: 1px solid var(--line); background: rgba(7, 8, 12, 0.7);
+      backdrop-filter: blur(8px); transition: color 0.3s, border-color 0.3s;
+    }
+    .mode.speaking { color: var(--amber); border-color: rgba(232, 161, 90, 0.45); }
+    .mode.listening { color: var(--cyan); border-color: rgba(127, 208, 214, 0.45); }
+    .caps {
+      width: min(640px, 100%); margin: 30px auto 18px; display: flex; flex-direction: column; gap: 10px;
+      min-height: 0; max-height: 220px; overflow: hidden;
+      mask-image: linear-gradient(to bottom, transparent, #000 34%);
+    }
+    .cap { max-width: 82%; padding: 10px 15px; border-radius: 16px; font-size: 16px; line-height: 1.4; animation: rise 0.35s ease-out; }
+    .cap.agent { align-self: flex-start; background: rgba(232, 161, 90, 0.10); border: 1px solid rgba(232, 161, 90, 0.22); }
+    .cap.caller { align-self: flex-end; background: rgba(127, 208, 214, 0.10); border: 1px solid rgba(127, 208, 214, 0.22); }
+    .cap.cut::after { content: ' — interrupted'; color: var(--muted); font-size: 13px; }
+    @keyframes rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+    .latency { display: none; gap: 14px; align-items: baseline; color: var(--muted); font-size: 13px; font-variant-numeric: tabular-nums; }
+    .latency.on { display: flex; }
+    .latency b { color: var(--ink); font-size: 20px; font-weight: 600; letter-spacing: -0.02em; }
+    .latency b.good { color: var(--green); } .latency b.ok { color: var(--amber); } .latency b.slow { color: #e07a6a; }
+    .head-right { display: flex; gap: 22px; align-items: baseline; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand">Harbor Goods <span>Order support</span></div>
+    <div class="head-right">
+      <div class="latency" id="latency" title="Voice-to-voice: end of your turn to the agent's first audio">
+        <span>Response <b id="lat-last">–</b></span><span>avg <span id="lat-avg">–</span></span>
+      </div>
+      <div id="status">Ready</div>
+    </div>
+  </header>
+  <main>
+    <div class="desk">
+      <div class="stage" id="stage">
+        <div class="orb-wrap">
+          <canvas class="viz" id="viz"></canvas>
+          <div class="placeholder" id="placeholder"></div>
+          <div class="mode" id="mode" hidden>Idle</div>
+          <video id="orb" class="orb" autoplay muted playsinline></video>
+        </div>
+        <article class="card" id="card" aria-live="polite"></article>
+      </div>
+      <div class="caps" id="caps" aria-live="polite"></div>
+      <p class="hint" id="hint">Ask about an order by name. Maya Chen, Andre Walsh, Priya Shah, Jonah Ellis, Lena Okonkwo, and Samir Haddad are in today's book.</p>
+      <div class="actions">
+        <button id="start" type="button">Start call</button>
+        <button id="leave" class="ghost" type="button" hidden>Leave</button>
+      </div>
+    </div>
+  </main>
+  <script src="/vendor/livekit-client.umd.js"></script>
+  <script>
+    const { Room, RoomEvent, Track, createLocalAudioTrack } = LivekitClient;
+    const statusEl = document.querySelector('#status');
+    const startBtn = document.querySelector('#start');
+    const leaveBtn = document.querySelector('#leave');
+    const stage = document.querySelector('#stage');
+    const card = document.querySelector('#card');
+    const video = document.querySelector('#orb');
+    const placeholder = document.querySelector('#placeholder');
+    const hint = document.querySelector('#hint');
+
+    const escape = (value) => String(value).replace(/[&<>"']/g, (ch) => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+    })[ch]);
+
+    function showCard(order) {
+      const tone = order.status === 'shipped' ? 'shipped' : order.status === 'delivered' ? 'delivered' : 'in_process';
+      const steps = (order.steps || []).map((step) =>
+        `<div class="step ${tone} ${escape(step.state)}"><div class="bar"></div><span>${escape(step.label)}</span></div>`
+      ).join('');
+      const photo = typeof order.image === 'string' && /^\/products\/[a-z0-9-]+\.(png|jpe?g|webp)$/.test(order.image)
+        ? `<img class="photo" src="${escape(order.image)}" alt="">`
+        : '';
+      const facts = [
+        order.placedLabel ? `<div>Placed <strong>${escape(order.placedLabel)}</strong></div>` : '',
+        order.shipsTo ? `<div>Ships to <strong>${escape(order.shipsTo)}</strong></div>` : '',
+      ].join('');
+      card.innerHTML = `
+        ${photo}
+        <div class="card-body">
+          <div class="who">${escape(order.customerName)} · Order ${escape(order.orderNumber)}</div>
+          <div class="item">${escape(order.title || order.item)}</div>
+          <div class="detail">${escape(order.detail || '')}</div>
+          <div class="meta"><span>Qty ${escape(order.quantity ?? 1)}</span><span>${escape(order.total || '')}</span></div>
+          <div class="order-no"><span class="pill ${tone}">${escape(order.statusLabel || '')}</span></div>
+          <div class="steps">${steps}</div>
+          <div class="when">${escape(order.deliveryLabel || '')}</div>
+          <div class="facts">${facts}</div>
+        </div>`;
+      card.classList.add('on');
+      stage.classList.add('has-order');
+      hint.hidden = true;
+    }
+
+    // ── Live layer ─────────────────────────────────────────────────────
+    const caps = document.querySelector('#caps');
+    const modeEl = document.querySelector('#mode');
+    const latencyEl = document.querySelector('#latency');
+    const latLast = document.querySelector('#lat-last');
+    const latAvg = document.querySelector('#lat-avg');
+    const latencies = [];
+    let lastAgentCap = null;
+
+    function addCaption(role, text) {
+      const el = document.createElement('div');
+      el.className = `cap ${role === 'agent' ? 'agent' : 'caller'}`;
+      el.textContent = text;
+      caps.append(el);
+      hint.hidden = true;
+      while (caps.children.length > 8) caps.firstElementChild.remove();
+      if (role === 'agent') lastAgentCap = el;
+    }
+
+    function showLatency(ms) {
+      latencies.push(ms);
+      const avg = latencies.reduce((a, b) => a + b, 0) / latencies.length;
+      latLast.textContent = `${(ms / 1000).toFixed(2)}s`;
+      latLast.className = ms < 1200 ? 'good' : ms < 2000 ? 'ok' : 'slow';
+      latAvg.textContent = `${(avg / 1000).toFixed(2)}s`;
+      latencyEl.classList.add('on');
+    }
+
+    function onCallEvent(event) {
+      if (event.type === 'caption') addCaption(event.role, event.text);
+      else if (event.type === 'latency') showLatency(event.responseMs);
+      else if (event.type === 'interrupted') lastAgentCap?.classList.add('cut');
+    }
+
+    // Audio-reactive ring: amber for the agent's voice, cyan for the caller's.
+    const viz = document.querySelector('#viz');
+    const vctx = viz.getContext('2d');
+    let audioCtx = null;
+    const analysers = { agent: null, caller: null };
+    function analyse(mediaStreamTrack, who) {
+      audioCtx ??= new AudioContext();
+      const source = audioCtx.createMediaStreamSource(new MediaStream([mediaStreamTrack]));
+      const analyser = audioCtx.createAnalyser();
+      analyser.fftSize = 256;
+      analyser.smoothingTimeConstant = 0.78;
+      source.connect(analyser);
+      analysers[who] = { analyser, bins: new Uint8Array(analyser.frequencyBinCount), level: 0 };
+    }
+    function levelOf(entry) {
+      if (!entry) return 0;
+      entry.analyser.getByteFrequencyData(entry.bins);
+      let sum = 0;
+      for (let i = 2; i < 48; i++) sum += entry.bins[i];
+      entry.level += (sum / 46 / 255 - entry.level) * 0.35;
+      return entry.level;
+    }
+    function draw(t) {
+      const dpr = window.devicePixelRatio || 1;
+      const w = viz.clientWidth * dpr, h = viz.clientHeight * dpr;
+      if (viz.width !== w || viz.height !== h) { viz.width = w; viz.height = h; }
+      vctx.clearRect(0, 0, w, h);
+      const cx = w / 2, cy = h / 2, base = Math.min(w, h) * 0.36;
+      const agent = levelOf(analysers.agent), caller = levelOf(analysers.caller);
+      const who = agent >= caller ? 'agent' : 'caller';
+      const level = Math.max(agent, caller);
+      const mode = level > 0.06 ? (who === 'agent' ? 'speaking' : 'listening') : 'idle';
+      if (!modeEl.hidden) { modeEl.className = `mode ${mode}`; modeEl.textContent = mode === 'speaking' ? 'Speaking' : mode === 'listening' ? 'Hearing you' : 'Listening'; }
+      const color = who === 'agent' ? [232, 161, 90] : [127, 208, 214];
+      const bins = analysers[who]?.bins;
+      for (let ring = 0; ring < 3; ring++) {
+        vctx.beginPath();
+        const points = 96;
+        for (let i = 0; i <= points; i++) {
+          const a = (i / points) * Math.PI * 2;
+          const bin = bins ? bins[2 + ((i * 3 + ring * 7) % 44)] / 255 : 0;
+          const wobble = Math.sin(a * (3 + ring) + t / (700 + ring * 260)) * 0.012;
+          const r = base * (1 + ring * 0.07 + wobble + bin * level * (0.5 - ring * 0.12));
+          const x = cx + Math.cos(a) * r, y = cy + Math.sin(a) * r;
+          i === 0 ? vctx.moveTo(x, y) : vctx.lineTo(x, y);
+        }
+        vctx.strokeStyle = `rgba(${color.join(',')}, ${0.12 + level * (0.9 - ring * 0.25)})`;
+        vctx.lineWidth = (2.2 - ring * 0.5) * dpr;
+        vctx.shadowColor = `rgba(${color.join(',')}, 0.8)`;
+        vctx.shadowBlur = 18 * level * dpr;
+        vctx.stroke();
+      }
+      requestAnimationFrame(draw);
+    }
+    requestAnimationFrame(draw);
+
+    function attach(track) {
+      if (track.kind === Track.Kind.Video) {
+        track.attach(video);
+        video.classList.add('on');
+        placeholder.classList.add('off');
+        return;
+      }
+      if (track.kind === Track.Kind.Audio) {
+        const element = track.attach();
+        element.autoplay = true;
+        document.body.append(element);
+        analyse(track.mediaStreamTrack, 'agent');
+      }
+    }
+
+    startBtn.addEventListener('click', async () => {
+      startBtn.disabled = true;
+      statusEl.textContent = 'Connecting';
+      try {
+        const session = await fetch('/session').then((response) => response.json());
+        const room = new Room();
+        // Register before connecting so the order card can arrive on the first lookup.
+        room.registerRpcMethod('show_order', async (data) => {
+          showCard(JSON.parse(data.payload));
+          return 'shown';
+        });
+        room.on(RoomEvent.TrackSubscribed, (track) => attach(track));
+        room.on(RoomEvent.DataReceived, (payload, _participant, _kind, topic) => {
+          if (topic !== 'sa-voice.events') return;
+          try { onCallEvent(JSON.parse(new TextDecoder().decode(payload))); } catch {}
+        });
+        room.on(RoomEvent.Disconnected, () => {
+          statusEl.textContent = 'Call ended';
+          leaveBtn.hidden = true;
+        });
+        // Microphone only. This page never opens a camera.
+        // The browser's own echo and noise suppression stay on. The host
+        // applies the speech model, so this page does not add another one.
+        const mic = await createLocalAudioTrack({
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true,
+        });
+        await room.connect(session.liveKitUrl, session.token);
+        await room.localParticipant.publishTrack(mic);
+        analyse(mic.mediaStreamTrack, 'caller');
+        await audioCtx?.resume();
+        modeEl.hidden = false;
+        statusEl.textContent = 'On the call';
+        startBtn.hidden = true;
+        leaveBtn.hidden = false;
+        leaveBtn.onclick = () => room.disconnect();
+      } catch (error) {
+        statusEl.textContent = error instanceof Error ? error.message : 'Could not start the call';
+        startBtn.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>

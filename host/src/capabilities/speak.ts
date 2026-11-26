@@ -6,7 +6,9 @@ import {
 } from '../../../agent/src/voice/protocol.ts';
 import type { HostStream } from '../bridge.js';
 import { log } from '../log.js';
-import type { MicTap } from '../mic.js';
+import { FRAME_MS, type MicTap } from '../mic.js';
+import type { Presence } from '../aura.js';
+import type { CallEvents, TurnClock } from '../events.js';
 
 /** Where agent audio goes. In production this is a LiveKit AudioSource. */
 export interface Speaker {
@@ -27,6 +29,12 @@ export interface SpeakOptions {
 
 const FRAME_SAMPLES = (SPEAK_SAMPLE_RATE * 20) / 1000; // 20 ms at 24 kHz
 const FRAME_BYTES = FRAME_SAMPLES * 2;
+/**
+ * Playback that must elapse before caller speech can interrupt.
+ * Echo cancellation is still settling in the first moments of a reply,
+ * and a speech run that started before the agent talked is not a barge-in.
+ */
+const BARGE_IN_GRACE_MS = 180;
 
 function toSamples(bytes: Uint8Array): Int16Array {
   // Copy so the Int16Array is aligned and owns its memory.
@@ -39,7 +47,15 @@ function toSamples(bytes: Uint8Array): Int16Array {
  * Serve `livekit.speak`: play the runtime's PCM into the room as it arrives.
  * Report how much the caller heard, then end the stream.
  */
-export async function serveSpeak(stream: HostStream, speaker: Speaker, mic: MicTap, options: SpeakOptions) {
+export async function serveSpeak(
+  stream: HostStream,
+  speaker: Speaker,
+  mic: MicTap,
+  options: SpeakOptions,
+  presence?: Presence,
+  events?: CallEvents,
+  clock?: TurnClock,
+) {
   const meta = stream.metadata as Partial<SpeakMetadata>;
   if (meta.protocol !== VOICE_PROTOCOL) throw new Error(`Unsupported voice protocol ${String(meta.protocol)}.`);
   if (meta.sampleRate !== SPEAK_SAMPLE_RATE || meta.format !== 'pcm_s16le') {
@@ -47,16 +63,38 @@ export async function serveSpeak(stream: HostStream, speaker: Speaker, mic: MicT
   }
   const bargeIn = options.bargeInEnabled && meta.bargeIn !== false;
   log.info('speak', `"${String(meta.text ?? '').slice(0, 90)}"`);
+  presence?.set('speaking');
+  let announced = false;
+  const announce = () => {
+    if (announced) return;
+    announced = true;
+    const latency = clock?.agentStarted();
+    if (latency) {
+      log.info('speak', `voice-to-voice ${latency.responseMs} ms`);
+      events?.emit({ type: 'latency', ...latency });
+    }
+    if (meta.text) events?.emit({ type: 'caption', role: 'agent', text: String(meta.text).slice(0, 500) });
+  };
 
   let capturedMs = 0;
   let interrupted = false;
   let heardMs = 0;
+  let speechWhilePlayingMs = 0;
   let onInterrupt!: () => void;
   const interruptedSignal = new Promise<void>((resolve) => (onInterrupt = resolve));
 
   const unsubscribe = bargeIn
-    ? mic.subscribe(() => {
-        if (interrupted || capturedMs === 0 || mic.speechRunMs < options.bargeInMs) return;
+    ? mic.subscribe((frame) => {
+        if (interrupted) return;
+        // Count only speech that arrives after playback is underway.
+        // mic.speechRunMs includes whatever was already happening when the
+        // reply started, which is how a greeting used to die in under 200 ms.
+        if (capturedMs < BARGE_IN_GRACE_MS || !frame.speech) {
+          speechWhilePlayingMs = 0;
+          return;
+        }
+        speechWhilePlayingMs += FRAME_MS;
+        if (speechWhilePlayingMs < options.bargeInMs) return;
         interrupted = true;
         heardMs = Math.max(0, capturedMs - speaker.queuedMs());
         speaker.clear();
@@ -79,6 +117,7 @@ export async function serveSpeak(stream: HostStream, speaker: Speaker, mic: MicT
       let offset = 0;
       while (bytes.byteLength - offset >= FRAME_BYTES && !interrupted) {
         await speaker.play(toSamples(bytes.subarray(offset, offset + FRAME_BYTES)), SPEAK_SAMPLE_RATE);
+        announce();
         capturedMs += 20;
         offset += FRAME_BYTES;
       }
@@ -109,6 +148,7 @@ export async function serveSpeak(stream: HostStream, speaker: Speaker, mic: MicT
   } finally {
     unsubscribe();
     stream.aborted.removeEventListener('abort', onAbort);
+    presence?.set('idle');
   }
 
   const report: SpeakReport = {
@@ -116,6 +156,7 @@ export async function serveSpeak(stream: HostStream, speaker: Speaker, mic: MicT
     playedMs: Math.round(interrupted ? heardMs : capturedMs),
     interrupted,
   };
+  if (interrupted) events?.emit({ type: 'interrupted', heardMs: report.playedMs });
   log.info('speak', interrupted ? `barge-in after ${report.playedMs} ms` : `played ${report.playedMs} ms`);
   stream.write(new TextEncoder().encode(`${JSON.stringify(report)}\n`));
   // Returning ends the stream. If we were interrupted, the runtime's next

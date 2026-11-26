@@ -13,8 +13,10 @@ import {
   PCM_FORMAT,
   SPEAK_SAMPLE_RATE,
   VOICE_PROTOCOL,
+  type CaptionMetadata,
   type HangupMetadata,
   type ListenMetadata,
+  type ShowMetadata,
   type SpeakMetadata,
   type SpeakReport,
 } from './protocol.ts';
@@ -38,7 +40,10 @@ export type ListenOutcome = { ok: true; pcm: Uint8Array; speechMs: number } | St
 const message = (error: unknown) => (error instanceof Error ? error.message : String(error));
 
 /** Read a readable side to the end. Resolves with what arrived, even if the stream errors. */
-async function drain(readable: ReadableStream<Uint8Array>): Promise<{ chunks: Uint8Array[]; error?: string }> {
+async function drain(
+  readable: ReadableStream<Uint8Array>,
+  onChunk?: (chunk: Uint8Array) => void,
+): Promise<{ chunks: Uint8Array[]; error?: string }> {
   const chunks: Uint8Array[] = [];
   const reader = readable.getReader();
   try {
@@ -46,6 +51,7 @@ async function drain(readable: ReadableStream<Uint8Array>): Promise<{ chunks: Ui
       const { value, done } = await reader.read();
       if (done) return { chunks };
       chunks.push(value);
+      onChunk?.(value);
     }
   } catch (error) {
     return { chunks, error: message(error) };
@@ -183,6 +189,8 @@ function parseReport(chunks: Uint8Array[]): SpeakReport | null {
 export async function listen(
   streams: RuntimeStreams,
   options: Pick<ListenMetadata, 'endSilenceMs' | 'noSpeechTimeoutMs' | 'maxUtteranceMs'>,
+  /** Called with each audio chunk as it arrives, for live transcription. */
+  onAudio?: (pcm: Uint8Array) => void,
 ): Promise<ListenOutcome> {
   const metadata: ListenMetadata = {
     protocol: VOICE_PROTOCOL,
@@ -200,7 +208,7 @@ export async function listen(
     'Listen timed out.',
   );
   try {
-    const { chunks, error } = await drain(stream.readable);
+    const { chunks, error } = await drain(stream.readable, onAudio);
     const outcome = await stream.closed;
     if (error || !outcome.ok) return { ok: false, error: outcome.error ?? error ?? 'The listen stream failed.' };
     const pcm = concatBytes(chunks);
@@ -211,11 +219,49 @@ export async function listen(
   }
 }
 
+/**
+ * Ask the host to put an order card on the caller's screen.
+ * The host performs the LiveKit RPC; this side only sends the card.
+ */
+export async function showCard(
+  streams: RuntimeStreams,
+  card: Record<string, unknown>,
+): Promise<{ ok: true } | StreamFailure> {
+  const metadata: ShowMetadata = { protocol: VOICE_PROTOCOL, card };
+  const opened = await streams.open({ capability: CAPABILITY.show, metadata, timeoutMs: 8_000 });
+  if (!opened.ok) return opened;
+  const { stream } = opened;
+  try {
+    const { error } = await drain(stream.readable);
+    const outcome = await stream.closed;
+    if (error || !outcome.ok) return { ok: false, error: outcome.error ?? error ?? 'The screen did not update.' };
+    return { ok: true };
+  } finally {
+    stream.close();
+  }
+}
+
 /** Ask the host to leave the room after any queued audio has played. */
 export async function hangup(streams: RuntimeStreams, reason: string): Promise<void> {
   const metadata: HangupMetadata = { protocol: VOICE_PROTOCOL, reason };
   const opened = await streams.open({ capability: CAPABILITY.hangup, metadata, timeoutMs: 5_000 });
   if (!opened.ok) return;
+  try {
+    await drain(opened.stream.readable);
+  } finally {
+    opened.stream.close();
+  }
+}
+
+/** Put the caller's transcript on their screen. Failures are ignored: captions are cosmetic. */
+export async function caption(
+  streams: RuntimeStreams,
+  text: string,
+  sttMs?: number,
+): Promise<void> {
+  const metadata: CaptionMetadata = { protocol: VOICE_PROTOCOL, role: 'caller', text, sttMs };
+  const opened = await streams.open({ capability: CAPABILITY.caption, metadata, timeoutMs: 3_000 }).catch(() => null);
+  if (!opened?.ok) return;
   try {
     await drain(opened.stream.readable);
   } finally {

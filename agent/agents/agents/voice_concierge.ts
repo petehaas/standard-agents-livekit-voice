@@ -10,14 +10,21 @@ import { defineAgent } from '@standardagents/spec';
  */
 export default defineAgent({
   name: 'voice_concierge',
-  title: 'Voice Concierge',
-  description: 'Talks with a caller in a LiveKit room. Audio moves over runtime streams to a LiveKit execution host.',
-  sideA: { label: 'Concierge', prompt: 'voice_concierge', maxSteps: 6, stopOnResponse: true },
+  title: 'Harbor Goods orders',
+  description: 'Looks up a Harbor Goods order for a caller and shows it on their screen.',
+  // maxSteps counts every model call in the session, not per turn. At 6, the
+  // call went silent on the caller's fourth question. Keep it well above
+  // maxSessionTurns (each turn is one or two steps: an optional lookup, then the reply).
+  sideA: { label: 'Order support', prompt: 'voice_concierge', maxSteps: 200, stopOnResponse: true },
   sideB: { label: 'Caller (voice)', handler: 'voice_caller' },
   maxSessionTurns: 80,
   // Non-secret defaults. A thread env value overrides each one.
   env: {
     VOICE_STT_PROVIDER: 'openai',
     VOICE_TTS_PROVIDER: 'openai',
+    // Short clips get transcribed as Chinese when the language is left open.
+    VOICE_STT_LANGUAGE: 'en',
+    // Words speech-to-text should expect. The customer names in the demo order book.
+    VOICE_STT_KEYTERMS: 'Harbor Goods, Maya Chen, Andre Walsh, Priya Shah, Jonah Ellis, Lena Okonkwo, Samir Haddad',
   },
 });

@@ -6,5 +6,8 @@ export const CALL_ENDED_KEY = 'voice_call_ended';
 /** What side A receives when the caller stays silent. The prompt knows this token. */
 export const NO_RESPONSE = '[no response]';
 
+/** Sound arrived, but speech-to-text found no words. Usually noise, not silence. */
+export const UNINTELLIGIBLE = '[unintelligible]';
+
 /** What the host sends as the first message, once the caller is in the room. */
 export const CALL_CONNECTED = '[caller connected]';

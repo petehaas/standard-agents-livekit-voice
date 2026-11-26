@@ -1,6 +1,9 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { heardPortion, pcmToWav } from '../../agent/src/voice/audio.js';
+import { LISTEN_SAMPLE_RATE, PCM_FORMAT, VOICE_PROTOCOL } from '../../agent/src/voice/protocol.ts';
+import type { HostStream } from '../src/bridge.js';
+import { serveListen } from '../src/capabilities/listen.js';
 import { frameDb } from '../src/vad.js';
 import { FRAME_MS, MicTap } from '../src/mic.js';
 import { silenceFrame, speechFrame } from './helpers.js';
@@ -48,6 +51,48 @@ test('a barge-in mark returns the interrupting words plus pre-roll', () => {
   // ~300 ms of speech run (minus smoothing) + 200 ms pause + 100 ms pre-roll
   assert.ok(turn.length * FRAME_MS >= 540 && turn.length * FRAME_MS <= 620, `got ${turn.length * FRAME_MS} ms`);
   assert.equal(mic.takeTurnStart(100), null, 'mark is consumed');
+});
+
+test('a short burst does not end the turn', async () => {
+  const mic = new MicTap();
+  for (let i = 0; i < 30; i++) mic.push(silenceFrame());
+  const abort = new AbortController();
+  let bytes = 0;
+  let settled = false;
+  const stream = {
+    metadata: {
+      protocol: VOICE_PROTOCOL,
+      sampleRate: LISTEN_SAMPLE_RATE,
+      format: PCM_FORMAT,
+      endSilenceMs: 200,
+      noSpeechTimeoutMs: 2_000,
+      maxUtteranceMs: 10_000,
+    },
+    aborted: abort.signal,
+    write(chunk: Uint8Array) {
+      bytes += chunk.byteLength;
+    },
+    end() {},
+    fail() {},
+  } as unknown as HostStream;
+
+  const pending = serveListen(stream, mic, { minSpeechMs: 160, prerollMs: 100 }).then(() => {
+    settled = true;
+  });
+  try {
+    for (let i = 0; i < 10; i++) mic.push(speechFrame());
+    for (let i = 0; i < 15; i++) mic.push(silenceFrame());
+    assert.equal(settled, false, 'a short burst closed the turn');
+    assert.equal(bytes, 0, 'the burst was sent on');
+    for (let i = 0; i < 40; i++) mic.push(speechFrame());
+    for (let i = 0; i < 15; i++) mic.push(silenceFrame());
+    await pending;
+    assert.equal(settled, true);
+    assert.ok(bytes > 0);
+  } finally {
+    abort.abort();
+    await pending;
+  }
 });
 
 test('heardPortion keeps the words played before an interruption', () => {
