@@ -4,23 +4,7 @@ A [Standard Agent](https://standardagentspec.org) that holds a real-time voice c
 
 The Standard Agent Specification has no voice support today. This repo shows that the existing primitives are enough to build it, and where a spec-level voice capability could start.
 
-```mermaid
-flowchart LR
-  subgraph Runtime["Standard Agents Builder (Cloudflare Worker)"]
-    A["Side A: voice_concierge prompt<br/>text in, text out"]
-    B["Side B: voice_caller handler<br/>STT + TTS calls"]
-    A -- reply text --> B
-    B -- transcript --> A
-  end
-  subgraph Host["Execution host (Node)"]
-    H["bridge client<br/>livekit.speak · listen · show · caption · hangup"]
-    V["Silero VAD · endpointing · barge-in"]
-  end
-  B <-- "runtime streams<br/>(PCM bytes)" --> H
-  H <--> V
-  H <-- "WebRTC" --> R(("LiveKit room"))
-  R <--> C["Caller<br/>(browser or phone)"]
-```
+![One voice turn: the caller's browser, LiveKit, the execution host, and the Standard Agents runtime with its two sides, speech to text, and text to speech](diagrams/voice-architecture.png)
 
 ## How a turn works
 
