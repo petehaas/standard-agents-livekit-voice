@@ -48,7 +48,18 @@ If the caller talks over the agent, the host stops playback within about 240 ms 
 
 You need Node 22+, a LiveKit project ([LiveKit Cloud](https://cloud.livekit.io) works on the free tier), and an OpenAI API key for the reply model. Speech can use the same OpenAI key, or a [Deepgram](https://deepgram.com) key for the lowest latency (see [Choosing speech providers](#choosing-speech-providers)).
 
-### 1. Start the agent
+### 1. Create a LiveKit project
+
+LiveKit carries the audio between the caller's browser and the agent. The free tier of LiveKit Cloud is enough for this demo.
+
+1. Sign up at [cloud.livekit.io](https://cloud.livekit.io) and create a project. Any name works.
+2. In the project, open **Settings → API keys** and select **Create key** (or open the key the project already has).
+3. Copy three values. You'll paste them into `host/.env` in step 3:
+   - **URL**: looks like `wss://your-project-abc123.livekit.cloud`
+   - **API key**: starts with `API`
+   - **API secret**: shown next to the key. Treat it like a password.
+
+### 2. Start the agent
 
 ```bash
 cd agent
@@ -69,12 +80,28 @@ OPENAI_API_KEY=sk-...
 npm run dev    # http://127.0.0.1:5173, sign in as "admin" with that password
 ```
 
-### 2. Start the host
+### 3. Start the host
+
+Leave the agent running. In a second terminal, from the repo root:
 
 ```bash
 cd host
 npm install
-cp .env.example .env    # set SA_ADMIN_PASSWORD and the three LIVEKIT_* values
+cp .env.example .env
+```
+
+Open `host/.env` and fill in four values: the password you chose in step 2, and the three LiveKit values from step 1.
+
+```dotenv
+SA_ADMIN_PASSWORD=<the SUPER_ADMIN_PASSWORD from agent/.dev.vars>
+LIVEKIT_URL=wss://your-project-abc123.livekit.cloud
+LIVEKIT_API_KEY=API...
+LIVEKIT_API_SECRET=<your API secret>
+```
+
+`.env` is ignored by git, so these never leave your machine. Then run:
+
+```bash
 npm run probe           # optional: checks the stream plumbing, no LiveKit or API calls
 npm start               # first copies the speech keys from agent/.dev.vars into the runtime
 ```
