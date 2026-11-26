@@ -198,6 +198,8 @@ The end-of-turn silence window (400 ms) and the trailing-word check are chosen b
 
 ## Layout
 
+`agent/agents/` follows the Standard Agents Builder's standard layout: one folder per kind of definition (`agents/`, `handlers/`, `prompts/`, `tools/`, `models/`), discovered by the Builder's Vite plugin. That is why the path reads `agent/agents/agents/`. Keeping the standard layout means the agent package looks like any other Standard Agents project.
+
 ```
 agent/                               Standard Agents Builder project
   agents/agents/voice_concierge.ts     side A prompt + side B voice handler
