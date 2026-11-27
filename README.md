@@ -108,7 +108,15 @@ Open it and press Start call. The page asks for the microphone only and shows th
 | 444 | Stoneware dinner plates | In process |
 | 555 | Beeswax pillar candles | Shipped |
 
-"111", "one one one", "triple one", and "one eleven" all work. The order card appears on the page, and you can ask follow-ups (when it arrives, where it ships, what it cost) or give another number. To add orders, edit `ORDERS` in `agent/src/orders.ts`. The admin UI's thread view shows the transcript and tool calls as you talk, and the host terminal logs every speak, listen, and order card.
+"111", "one one one", "triple one", and "one eleven" all work. The order card appears on the page, and you can ask follow-ups (when it arrives, where it ships, what it cost) or give another number. To add orders, edit `ORDERS` in `agent/src/orders.ts`.
+
+Then try more than a status check:
+
+- **"Where is it right now?"** shows a map of the route, where the package is, and the carrier's scan history (222 and 555 are on the road).
+- **"Can you deliver it Monday and leave it at the side door?"** puts the change on screen and asks you to confirm. Say "yes" and the card updates.
+- **"I'd like to return it."** on a delivered order (333) starts a return and shows a return code.
+
+Changes take two steps. The model can only propose one (`request_delivery_change`, `request_return`). `confirm_change` applies it, and only when the caller's own latest words are a clear yes; the code checks the transcript, not the model's reading of it. Code also enforces the rules: no earlier delivery than planned, no Sundays, at most ten days out, and returns only once delivered. The admin UI's thread view shows the transcript and tool calls as you talk, and the host terminal logs every speak, listen, and order card.
 
 `npm run probe` output looks like this:
 
@@ -127,7 +135,12 @@ The desk at `http://127.0.0.1:8787/` is the caller's side of the call. It asks f
 - **the agent's orb**, a video track the host renders, with an audio-reactive ring drawn in the browser (amber while the agent speaks, cyan while you do);
 - **live captions** for both sides. A reply you talked over is marked as interrupted;
 - **the response time** of each turn in the header: from the end of your turn to the agent's first audio, which is the gap the caller actually hears. Green under 1.2 s, amber under 2 s;
-- **the order card**, when `lookup_order` finds one.
+- **a hint toast** with the demo order numbers, until the call gets going;
+- **the order card**, when `lookup_order` finds one, updated after a confirmed change;
+- **the tracking card**, a route map and scan timeline from `track_package`. The map is drawn in the page, with no map service or key;
+- **a confirmation box** while a change waits for the caller's yes.
+
+The carrier, "Parcelway", is fictional.
 
 Captions and timings travel as LiveKit data packets on the `sa-voice.events` topic. Nothing in the call depends on them.
 
@@ -214,9 +227,12 @@ agent/                               demo: Standard Agents Builder project
   agents/handlers/voice_caller.ts      wraps the package's handler
   agents/prompts/voice_concierge.ts    spoken-style prompt; knows about interruptions
   agents/models/voice_fast.ts          the reply model
-  agents/tools/                        lookup_order, end_call
+  agents/tools/                        lookup_order, track_package, request_delivery_change,
+                                       request_return, confirm_change, end_call
   agents/agents/stream_probe.ts        keyless self-test agent
   src/orders.ts                        the demo order book and spoken-number parsing
+  src/fulfillment.ts                   tracking routes, spoken-day parsing, change and return rules
+  src/call-state.ts                    the order on screen, saved changes, and the pending change
 host/                                demo: runs startVoiceHost() and serves the caller's page
   src/index.ts, src/config.ts          wiring and host/.env settings
   src/desk.ts, desk/                   the support desk page
@@ -226,7 +242,7 @@ docs/bridge-protocol.md              how a host attaches to Builder, and spec no
 ## Tests
 
 ```bash
-npm test          # 31 tests across packages/host and host, a few seconds
+npm test          # 41 tests across packages/host and host, a few seconds
 npm run typecheck
 ```
 

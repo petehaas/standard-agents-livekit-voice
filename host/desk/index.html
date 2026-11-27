@@ -147,8 +147,85 @@
     }
     button.ghost { background: transparent; color: var(--muted); border: 1px solid var(--line); }
     button:disabled { opacity: 0.5; cursor: default; }
-    .hint { text-align: center; color: var(--muted); font-size: 14px; max-width: 360px; line-height: 1.45; }
-    .stage.has-order .hint { display: none; }
+    /* ── Changes, tracking, confirmation ── */
+    .updated {
+      display: flex; align-items: center; gap: 8px; margin: 0 0 12px; padding: 9px 12px; border-radius: 10px;
+      background: rgba(143, 191, 154, 0.14); color: var(--green); font-size: 14px; animation: rise 0.4s ease-out;
+    }
+    .note { margin-top: 12px; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--line); font-size: 14px; color: var(--muted); }
+    .note strong { color: var(--ink); font-weight: 550; }
+    .return-code {
+      margin-top: 14px; padding: 14px; border-radius: 12px; text-align: center;
+      background: rgba(244, 241, 234, 0.05); border: 1px dashed rgba(244, 241, 234, 0.25);
+    }
+    .return-code b { display: block; font-size: 26px; letter-spacing: 0.18em; font-variant-numeric: tabular-nums; margin: 4px 0; }
+    .return-code span { color: var(--muted); font-size: 12px; }
+    .map { display: block; width: 100%; height: auto; background: radial-gradient(ellipse at 50% 40%, #171a24, #0e1016); }
+    .map .land { fill: rgba(244, 241, 234, 0.045); stroke: rgba(244, 241, 234, 0.16); stroke-width: 0.8; }
+    .map .grid { fill: url(#dots); }
+    .map .route-todo { fill: none; stroke: rgba(244, 241, 234, 0.35); stroke-width: 1.6; stroke-dasharray: 3 4; }
+    .map .route-done { fill: none; stroke: var(--amber); stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+    .map .stop { fill: #0e1016; stroke: rgba(244, 241, 234, 0.6); stroke-width: 1.4; }
+    .map .stop.passed { stroke: var(--amber); }
+    .map .end { fill: var(--cyan); }
+    .map text { fill: var(--muted); font-size: 9px; font-family: "Avenir Next", "Segoe UI", sans-serif; }
+    .map text.strong { fill: var(--ink); }
+    .map .pulse { fill: var(--amber); opacity: 0.35; transform-box: fill-box; transform-origin: center; animation: pulse 1.8s ease-out infinite; }
+    @keyframes pulse { from { transform: scale(0.6); opacity: 0.55; } to { transform: scale(2.6); opacity: 0; } }
+    .track-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin-top: 12px; }
+    .track-no { font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; letter-spacing: 0.04em; }
+    .eta { font-size: 18px; margin: 6px 0 12px; }
+    .scans { list-style: none; margin: 0; padding: 0; display: grid; gap: 0; }
+    .scan { position: relative; padding: 0 0 12px 20px; font-size: 14px; }
+    .scan::before { content: ''; position: absolute; left: 4px; top: 6px; width: 7px; height: 7px; border-radius: 50%; background: rgba(244, 241, 234, 0.3); }
+    .scan::after { content: ''; position: absolute; left: 7px; top: 15px; bottom: -2px; width: 1px; background: var(--line); }
+    .scan:last-child::after { display: none; }
+    .scan:first-child::before { background: var(--amber); box-shadow: 0 0 0 4px rgba(232, 161, 90, 0.18); }
+    .scan .when { font-size: 12px; color: var(--muted); }
+    .scan .what { color: var(--ink); }
+    .scan .where { color: var(--muted); }
+    .confirm {
+      margin: 16px 20px 0; padding: 16px; border-radius: 14px;
+      background: rgba(232, 161, 90, 0.08); border: 1px solid rgba(232, 161, 90, 0.4);
+      animation: rise 0.35s ease-out;
+    }
+    .confirm h3 { margin: 0 0 8px; font-size: 17px; font-weight: 600; color: var(--amber); }
+    .confirm ul { margin: 0 0 10px; padding-left: 18px; font-size: 15px; line-height: 1.5; }
+    .confirm p { margin: 0; color: var(--muted); font-size: 13px; }
+    .card .confirm + .card-body { opacity: 0.45; }
+
+    /* ── Hint toast ── */
+    .toast {
+      position: fixed; left: 50%; top: 72px; z-index: 20;
+      display: flex; align-items: center; gap: 14px;
+      width: max-content; max-width: calc(100vw - 32px);
+      padding: 12px 12px 12px 18px; border-radius: 16px;
+      background: rgba(18, 20, 27, 0.82); border: 1px solid var(--line);
+      box-shadow: 0 18px 50px rgba(0, 0, 0, 0.45);
+      backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+      transform: translate(-50%, 0); opacity: 1;
+      transition: opacity 0.35s ease, transform 0.35s ease;
+      animation: toast-in 0.5s 0.4s ease-out both;
+    }
+    .toast.gone { opacity: 0; transform: translate(-50%, -12px); pointer-events: none; }
+    @keyframes toast-in { from { opacity: 0; transform: translate(-50%, -12px); } }
+    .toast-icon {
+      flex: none; width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center;
+      background: rgba(232, 161, 90, 0.14); color: var(--amber);
+    }
+    .toast-text { font-size: 14px; line-height: 1.35; }
+    .toast-text small { display: block; color: var(--muted); font-size: 12px; margin-bottom: 6px; }
+    .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+    .chip {
+      font-size: 13px; font-variant-numeric: tabular-nums; letter-spacing: 0.04em;
+      padding: 3px 9px; border-radius: 999px; border: 1px solid var(--line); color: var(--ink);
+    }
+    .toast-close {
+      flex: none; background: transparent; color: var(--muted); padding: 6px; width: 30px; height: 30px;
+      border-radius: 50%; display: grid; place-items: center; font-size: 18px; line-height: 1;
+    }
+    .toast-close:hover { color: var(--ink); background: rgba(244, 241, 234, 0.08); }
+    @media (max-width: 520px) { .toast { top: 64px; } }
 
     /* ── Live layer: audio-reactive ring, captions, latency ── */
     .viz { position: absolute; inset: -14%; width: 128%; height: 128%; pointer-events: none; }
@@ -161,6 +238,8 @@
     }
     .mode.speaking { color: var(--amber); border-color: rgba(232, 161, 90, 0.45); }
     .mode.listening { color: var(--cyan); border-color: rgba(127, 208, 214, 0.45); }
+    .mode.ended { color: var(--muted); border-color: var(--line); }
+    .orb-wrap.ended .placeholder, .orb-wrap.ended video { opacity: 0.35; filter: grayscale(0.6); transition: opacity 0.8s, filter 0.8s; }
     .caps {
       width: min(640px, 100%); margin: 30px auto 18px; display: flex; flex-direction: column; gap: 10px;
       min-height: 0; max-height: 220px; overflow: hidden;
@@ -200,7 +279,16 @@
         <article class="card" id="card" aria-live="polite"></article>
       </div>
       <div class="caps" id="caps" aria-live="polite"></div>
-      <p class="hint" id="hint">Press Start call and say an order number: 111, 222, 333, 444, or 555.</p>
+      <div class="toast" id="hint" role="status">
+        <div class="toast-icon" aria-hidden="true">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5"/><path d="M12 7.5h.01"/></svg>
+        </div>
+        <div class="toast-text">
+          <small id="hint-lead">Press Start call, then say an order number</small>
+          <div class="chips"><span class="chip">111</span><span class="chip">222</span><span class="chip">333</span><span class="chip">444</span><span class="chip">555</span></div>
+        </div>
+        <button class="toast-close" id="hint-close" type="button" aria-label="Dismiss">&times;</button>
+      </div>
       <div class="actions">
         <button id="start" type="button">Start call</button>
         <button id="leave" class="ghost" type="button" hidden>Leave</button>
@@ -218,38 +306,144 @@
     const video = document.querySelector('#orb');
     const placeholder = document.querySelector('#placeholder');
     const hint = document.querySelector('#hint');
+    const hintLead = document.querySelector('#hint-lead');
+    const dismissHint = () => hint.classList.add('gone');
+    document.querySelector('#hint-close').addEventListener('click', dismissHint);
 
     const escape = (value) => String(value).replace(/[&<>"']/g, (ch) => ({
       '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
     })[ch]);
 
-    function showCard(order) {
-      const tone = order.status === 'shipped' ? 'shipped' : order.status === 'delivered' ? 'delivered' : 'in_process';
+    // Cards arrive over the `show_card` RPC. `kind` picks the layout.
+    let lastOrder = null;
+
+    function showCard(data) {
+      if (data.kind === 'tracking') renderTracking(data);
+      else if (data.kind === 'confirm') renderConfirm(data);
+      else renderOrder(data);
+      card.classList.add('on');
+      stage.classList.add('has-order');
+      dismissHint();
+    }
+
+    function toneOf(status) {
+      return status === 'shipped' ? 'shipped' : status === 'delivered' ? 'delivered' : 'in_process';
+    }
+
+    function orderBody(order) {
+      const tone = toneOf(order.status);
       const steps = (order.steps || []).map((step) =>
         `<div class="step ${tone} ${escape(step.state)}"><div class="bar"></div><span>${escape(step.label)}</span></div>`
       ).join('');
-      const photo = typeof order.image === 'string' && /^\/products\/[a-z0-9-]+\.(png|jpe?g|webp)$/.test(order.image)
-        ? `<img class="photo" src="${escape(order.image)}" alt="">`
-        : '';
       const facts = [
         order.placedLabel ? `<div>Placed <strong>${escape(order.placedLabel)}</strong></div>` : '',
         order.shipsTo ? `<div>Ships to <strong>${escape(order.shipsTo)}</strong></div>` : '',
       ].join('');
-      card.innerHTML = `
-        ${photo}
+      const note = order.instructions ? `<div class="note">Leave it: <strong>${escape(order.instructions)}</strong></div>` : '';
+      const ret = order.returnCode
+        ? `<div class="return-code"><span>Return code</span><b>${escape(order.returnCode)}</b><span>Drop off at any Parcelway location within 30 days</span></div>`
+        : '';
+      return `
         <div class="card-body">
+          ${order.updated ? `<div class="updated">✓ ${escape(order.updated)}</div>` : ''}
           <div class="who">${escape(order.customerName)} · Order ${escape(order.orderNumber)}</div>
           <div class="item">${escape(order.title || order.item)}</div>
           <div class="detail">${escape(order.detail || '')}</div>
           <div class="meta"><span>Qty ${escape(order.quantity ?? 1)}</span><span>${escape(order.total || '')}</span></div>
-          <div class="order-no"><span class="pill ${tone}">${escape(order.statusLabel || '')}</span></div>
+          <div class="order-no"><span class="pill ${tone}">${escape(order.returnCode ? 'Return started' : order.statusLabel || '')}</span></div>
           <div class="steps">${steps}</div>
           <div class="when">${escape(order.deliveryLabel || '')}</div>
           <div class="facts">${facts}</div>
+          ${note}${ret}
         </div>`;
-      card.classList.add('on');
-      stage.classList.add('has-order');
-      hint.hidden = true;
+    }
+
+    function photoOf(order) {
+      return typeof order.image === 'string' && /^\/products\/[a-z0-9-]+\.(png|jpe?g|webp)$/.test(order.image)
+        ? `<img class="photo" src="${escape(order.image)}" alt="">`
+        : '';
+    }
+
+    function renderOrder(order) {
+      lastOrder = order;
+      card.innerHTML = photoOf(order) + orderBody(order);
+    }
+
+    function renderConfirm(data) {
+      const box = `
+        <div class="confirm" role="alert">
+          <h3>${escape(data.heading)}</h3>
+          <ul>${data.lines.map((line) => `<li>${escape(line)}</li>`).join('')}</ul>
+          <p>Say “yes” to confirm, or tell the agent what to change.</p>
+        </div>`;
+      const sameOrder = lastOrder && lastOrder.orderNumber === data.orderNumber;
+      card.innerHTML = box + (sameOrder ? orderBody(lastOrder) : `<div class="card-body"><div class="item">${escape(data.title)}</div></div>`);
+    }
+
+    // Contiguous US, coarse. Enough to place the route; not a survey.
+    const US = [[-124.7,48.4],[-124.2,42],[-124.4,40.4],[-122.4,37.2],[-120.6,34.6],[-117.1,32.5],[-114.7,32.7],[-111,31.3],[-108.2,31.3],[-106.5,31.8],[-104.5,29.6],[-103,29],[-101.4,29.8],[-99.5,27.5],[-97.4,25.9],[-97.2,27.8],[-94.5,29.5],[-90.6,29.1],[-89.4,30.2],[-88,30.4],[-85,29.7],[-83.8,29.9],[-82.7,27.6],[-81.2,25.1],[-80.1,26.8],[-81.4,30.7],[-79.2,33.2],[-75.5,35.3],[-76.3,37.9],[-74,40.6],[-71.9,41.3],[-70,41.7],[-70.6,43.1],[-67,44.8],[-67.8,47.1],[-69.2,47.4],[-71.5,45],[-75,45],[-76.8,43.6],[-79.1,43.2],[-79,42.7],[-82.5,41.7],[-83.5,42.1],[-82.4,43],[-84.8,45.9],[-83.6,46.1],[-84.6,46.5],[-88.4,48.3],[-95.2,49],[-123.3,49],[-122.8,48.2]];
+    const MAP_W = 400, MAP_H = 230;
+    const project = ([lon, lat]) => [((lon + 126) / 60) * MAP_W, ((50.5 - lat) / 27) * MAP_H];
+
+    function mapSvg(stops, progress) {
+      const pts = stops.map((stop) => project([stop.lon, stop.lat]));
+      const land = 'M' + US.map((p) => project(p).map((n) => n.toFixed(1)).join(',')).join('L') + 'Z';
+      const line = (list) => list.map((p) => p.map((n) => n.toFixed(1)).join(',')).join(' ');
+      const whole = Math.floor(progress);
+      const frac = progress - whole;
+      const done = pts.slice(0, whole + 1);
+      let here = pts[Math.min(whole, pts.length - 1)];
+      if (whole < pts.length - 1 && frac > 0) {
+        const [a, b] = [pts[whole], pts[whole + 1]];
+        here = [a[0] + (b[0] - a[0]) * frac, a[1] + (b[1] - a[1]) * frac];
+        done.push(here);
+      }
+      // Labels sit beside their dot, away from the route, and flip inward near the map's edges.
+      const label = (p, text, strong, preferEnd) => {
+        const anchorEnd = p[0] < 70 ? false : p[0] > MAP_W - 70 ? true : preferEnd;
+        return `<text x="${(p[0] + (anchorEnd ? -7 : 7)).toFixed(1)}" y="${(p[1] + 3).toFixed(1)}" text-anchor="${anchorEnd ? 'end' : 'start'}" class="${strong ? 'strong' : ''}">${escape(text)}</text>`;
+      };
+      const first = pts[0], last = pts[pts.length - 1];
+      const westward = last[0] < first[0];
+      return `
+        <svg class="map" viewBox="0 0 ${MAP_W} ${MAP_H}" role="img" aria-label="Route from ${escape(stops[0].name)} to ${escape(stops[stops.length - 1].name)}">
+          <defs>
+            <pattern id="dots" width="6" height="6" patternUnits="userSpaceOnUse"><circle cx="1" cy="1" r="0.7" fill="rgba(244,241,234,0.12)"/></pattern>
+            <clipPath id="us"><path d="${land}"/></clipPath>
+          </defs>
+          <path class="land" d="${land}"/>
+          <rect class="grid" width="${MAP_W}" height="${MAP_H}" clip-path="url(#us)"/>
+          <polyline class="route-todo" points="${line(pts)}"/>
+          <polyline class="route-done" points="${line(done)}"/>
+          ${pts.slice(1, -1).map((p, i) => `<circle class="stop ${i + 1 <= progress ? 'passed' : ''}" cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="2.6"/>`).join('')}
+          <circle class="stop passed" cx="${first[0].toFixed(1)}" cy="${first[1].toFixed(1)}" r="3.4"/>
+          <circle class="end" cx="${last[0].toFixed(1)}" cy="${last[1].toFixed(1)}" r="4"/>
+          ${label(first, stops[0].name.split(',')[0], false, !westward)}
+          ${label(last, stops[stops.length - 1].name.split(',')[0], true, westward)}
+          <circle class="pulse" cx="${here[0].toFixed(1)}" cy="${here[1].toFixed(1)}" r="5"/>
+          <circle cx="${here[0].toFixed(1)}" cy="${here[1].toFixed(1)}" r="4.4" fill="var(--amber)" stroke="#0e1016" stroke-width="1.6"/>
+        </svg>`;
+    }
+
+    function renderTracking(data) {
+      const tone = toneOf(data.statusLabel.toLowerCase().replace(' ', '_'));
+      const scans = data.scans.map((scan) => `
+        <li class="scan">
+          <div class="when">${escape(scan.when)}</div>
+          <div><span class="what">${escape(scan.label)}</span> <span class="where">· ${escape(scan.place)}</span></div>
+        </li>`).join('');
+      card.innerHTML = `
+        ${mapSvg(data.stops, data.progress)}
+        <div class="card-body">
+          <div class="who">${escape(data.carrier)} · Order ${escape(data.orderNumber)}</div>
+          <div class="track-head">
+            <span class="pill ${tone}">${escape(data.statusLabel)}</span>
+            <span class="track-no">${escape(data.trackingNumber)}</span>
+          </div>
+          <div class="eta">${escape(data.etaLabel)}</div>
+          ${data.instructions ? `<div class="note" style="margin:0 0 12px">Leave it: <strong>${escape(data.instructions)}</strong></div>` : ''}
+          <ol class="scans">${scans}</ol>
+        </div>`;
     }
 
     // ── Live layer ─────────────────────────────────────────────────────
@@ -266,7 +460,7 @@
       el.className = `cap ${role === 'agent' ? 'agent' : 'caller'}`;
       el.textContent = text;
       caps.append(el);
-      hint.hidden = true;
+      dismissHint();
       while (caps.children.length > 8) caps.firstElementChild.remove();
       if (role === 'agent') lastAgentCap = el;
     }
@@ -318,7 +512,7 @@
       const who = agent >= caller ? 'agent' : 'caller';
       const level = Math.max(agent, caller);
       const mode = level > 0.06 ? (who === 'agent' ? 'speaking' : 'listening') : 'idle';
-      if (!modeEl.hidden) { modeEl.className = `mode ${mode}`; modeEl.textContent = mode === 'speaking' ? 'Speaking' : mode === 'listening' ? 'Hearing you' : 'Listening'; }
+      if (!modeEl.hidden && !callEnded) { modeEl.className = `mode ${mode}`; modeEl.textContent = mode === 'speaking' ? 'Speaking' : mode === 'listening' ? 'Hearing you' : 'Listening'; }
       const color = who === 'agent' ? [232, 161, 90] : [127, 208, 214];
       const bins = analysers[who]?.bins;
       for (let ring = 0; ring < 3; ring++) {
@@ -342,6 +536,18 @@
     }
     requestAnimationFrame(draw);
 
+    // Once the call ends, the orb stops reacting and says so.
+    let callEnded = false;
+    function endCall() {
+      if (callEnded) return;
+      callEnded = true;
+      analysers.agent = null;
+      analysers.caller = null;
+      modeEl.className = 'mode ended';
+      modeEl.textContent = 'Call ended';
+      document.querySelector('.orb-wrap').classList.add('ended');
+    }
+
     function attach(track) {
       if (track.kind === Track.Kind.Video) {
         track.attach(video);
@@ -363,6 +569,7 @@
       try {
         const session = await fetch('/session').then((response) => response.json());
         const room = new Room();
+        let mic = null;
         // Register before connecting so a card can arrive on the first lookup.
         room.registerRpcMethod('show_card', async (data) => {
           showCard(JSON.parse(data.payload));
@@ -376,11 +583,13 @@
         room.on(RoomEvent.Disconnected, () => {
           statusEl.textContent = 'Call ended';
           leaveBtn.hidden = true;
+          endCall();
+          mic?.stop();
         });
         // Microphone only. This page never opens a camera.
         // The browser's own echo and noise suppression stay on. The host
         // applies the speech model, so this page does not add another one.
-        const mic = await createLocalAudioTrack({
+        mic = await createLocalAudioTrack({
           echoCancellation: true,
           noiseSuppression: true,
           autoGainControl: true,
@@ -392,6 +601,7 @@
         modeEl.hidden = false;
         statusEl.textContent = 'On the call';
         startBtn.hidden = true;
+        hintLead.textContent = 'You’re live. Say an order number';
         leaveBtn.hidden = false;
         leaveBtn.onclick = () => room.disconnect();
       } catch (error) {
