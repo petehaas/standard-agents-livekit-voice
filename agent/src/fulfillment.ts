@@ -268,7 +268,14 @@ export function planDeliveryChange(
   ].filter(Boolean);
   return {
     ok: true,
-    pending: { type: 'delivery', orderNumber: order.orderNumber, deliveryInDays, instructions, summary: parts.join(', and ') },
+    // Only set fields go in: thread values must be plain JSON, and runtimes may refuse undefined.
+    pending: {
+      type: 'delivery',
+      orderNumber: order.orderNumber,
+      ...(deliveryInDays !== undefined ? { deliveryInDays } : {}),
+      ...(instructions ? { instructions } : {}),
+      summary: parts.join(', and '),
+    },
   };
 }
 

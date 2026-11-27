@@ -128,3 +128,14 @@ test('end_call refuses to hang up before the caller has spoken', async () => {
   await endCallTool.execute(stateWith('Okay, thanks, bye!'), { reason: 'caller said goodbye' });
   assert.equal(values.get(CALL_ENDED_KEY), true);
 });
+
+test('only a line the caller heard counts as a repeat', async () => {
+  // The greeting written alongside a refused end_call was never played. Its
+  // retry must be spoken, or the call opens in silence.
+  const { repeatsPrevious, wasSpoken } = await import('@petehaas/standard-agents-livekit-voice');
+  const greeting = 'Thanks for calling Harbor Goods. What’s your three-digit order number?';
+  assert.equal(repeatsPrevious(greeting, greeting), true);
+  assert.equal(wasSpoken({ metadata: undefined } as never), false);
+  assert.equal(wasSpoken({ metadata: { voice: { spoken: true } } } as never), true);
+  assert.equal(wasSpoken({ metadata: { traceTrigger: {} } } as never), false);
+});

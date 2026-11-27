@@ -126,7 +126,7 @@ Then try more than a status check:
 - **"Can you deliver it Monday and leave it at the side door?"** puts the change on screen and asks you to confirm. Say "yes" and the card updates.
 - **"I'd like to return it."** on a delivered order (333) starts a return and shows a return code.
 
-Changes take two steps. The model can only propose one (`request_delivery_change`, `request_return`). `confirm_change` applies it, and only when the caller's own latest words are a clear yes; the code checks the transcript, not the model's reading of it. Code also enforces the rules: no earlier delivery than planned, no Sundays, at most ten days out, and returns only once delivered. The admin UI's thread view shows the transcript and tool calls as you talk, and the host terminal logs every speak, listen, and order card.
+Changes take two steps. The model can only propose one (`request_delivery_change`, `request_return`). `confirm_change` applies it, and only when the caller's own latest words are a clear yes; `cancel_change` drops it on a no and clears it from the screen; the code checks the transcript, not the model's reading of it. Code also enforces the rules: no earlier delivery than planned, no Sundays, at most ten days out, and returns only once delivered. The admin UI's thread view shows the transcript and tool calls as you talk, and the host terminal logs every speak, listen, and order card.
 
 `npm run probe` output looks like this:
 
@@ -139,6 +139,13 @@ Changes take two steps. The model can only propose one (`request_delivery_change
 ```
 
 ## The support desk
+
+| | |
+| --- | --- |
+| ![The desk before a call: the orb, a hint toast with the demo order numbers, and the Start call button](screenshots/1-ready.png) | ![Order 111 on screen: the linen throw blanket card with photo, status steps, and arrival date, beside the speaking orb](screenshots/2-order-card.webp) |
+| **Ready.** The hint toast lists the demo orders. | **Lookup.** `lookup_order` puts the order card on screen. |
+| ![Tracking for order 111: a map of the route from Louisville to Brooklyn, the tracking number, and the scan history](screenshots/3-tracking-map.png) | ![A proposed change for order 444, leave it by the driveway, waiting in an amber Change this delivery box above the order card](screenshots/4-confirm-change.png) |
+| **Tracking.** `track_package` draws the route and scan history. | **Confirm.** A proposed change waits on screen for the caller's yes. |
 
 The desk at `http://127.0.0.1:8787/` is the caller's side of the call. It asks for the microphone only and shows:
 
@@ -242,7 +249,7 @@ agent/                               demo: Standard Agents Builder project
   agents/prompts/order_support.ts      side A: spoken-style prompt; knows about interruptions
   agents/models/voice_fast.ts          the reply model
   agents/tools/                        lookup_order, track_package, request_delivery_change,
-                                       request_return, confirm_change, end_call
+                                       request_return, confirm_change, cancel_change, end_call
   agents/agents/stream_probe.ts        keyless self-test agent
   src/orders.ts                        the demo order book and spoken-number parsing
   src/fulfillment.ts                   tracking routes, spoken-day parsing, change and return rules
@@ -256,7 +263,7 @@ docs/bridge-protocol.md              how a host attaches to Builder, and spec no
 ## Tests
 
 ```bash
-npm test          # 41 tests across packages/host and host, a few seconds
+npm test          # 43 tests across packages/host and host, a few seconds
 npm run typecheck
 ```
 
