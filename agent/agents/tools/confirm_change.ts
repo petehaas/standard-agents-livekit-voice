@@ -18,7 +18,7 @@ export default defineTool({
     if (!isAffirmative(latest)) {
       return {
         status: 'success' as const,
-        result: `not applied: the caller's last words ("${latest}") are not a clear yes. Ask once more whether to ${pending.summary}, or drop it if they said no.`,
+        result: `not applied: the caller's last words ("${latest}") are not a clear yes. If they said no, call cancel_change. Otherwise ask once more whether to ${pending.summary}.`,
       };
     }
 

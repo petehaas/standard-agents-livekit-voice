@@ -109,6 +109,12 @@ export function repeatsPrevious(reply: string, previous: string | undefined): bo
   return now.length > 0 && normalize(previous).includes(now);
 }
 
+/** True when this handler played the message to the caller. */
+export function wasSpoken(message: Pick<Message, 'metadata'> | undefined): boolean {
+  const voice = (message?.metadata as { voice?: { spoken?: boolean } } | undefined)?.voice;
+  return voice?.spoken === true;
+}
+
 const errorText = (error: unknown) => (error instanceof Error ? error.message : String(error));
 
 async function endCall(state: ThreadState, reason: string) {
@@ -152,14 +158,16 @@ export async function runVoiceTurn(
   }
 
   // ── Speak ──────────────────────────────────────────────────────────────
-  // A reply that only repeats the preamble the caller just heard (no caller
-  // words in between) is not spoken again. Its turn still listens.
+  // A reply that only repeats a preamble the caller actually heard (no caller
+  // words in between) is not spoken again. Its turn still listens. Only lines
+  // this handler spoke count: a runtime may not hand side B every preamble,
+  // and skipping an unheard greeting leaves the caller in silence.
   const { messages: recent } = await state.getMessages({ limit: 6, order: 'desc' });
   const since = recent.filter((m) => m.id !== message.id);
   const lastCaller = since.findIndex((m) => m.role === 'user');
   const previous = since.find((m, i) => m.role === 'assistant' && m.content?.trim() && (lastCaller < 0 || i < lastCaller));
   let spoken: Awaited<ReturnType<typeof speak>>;
-  if (repeatsPrevious(text, previous?.content ?? undefined)) {
+  if (wasSpoken(previous) && repeatsPrevious(text, previous?.content ?? undefined)) {
     console.info('[voice] reply repeats the preamble the caller just heard; not speaking it twice');
     spoken = { ok: true, playedMs: 0, interrupted: false, firstAudioMs: null };
   } else {
@@ -185,8 +193,10 @@ export async function runVoiceTurn(
     const heard = heardPortion(text, spoken.playedMs, spoken.totalMs);
     await state.updateMessage(message.id, {
       content: heard ? `${heard} —` : '—',
-      metadata: { voice: { interrupted: true, fullText: text, playedMs: Math.round(spoken.playedMs) } },
+      metadata: { voice: { spoken: true, interrupted: true, fullText: text, playedMs: Math.round(spoken.playedMs) } },
     });
+  } else if (spoken.playedMs > 0) {
+    await state.updateMessage(message.id, { metadata: { voice: { spoken: true } } });
   }
 
   // Words written alongside a tool call ("Let me check that.") are a preamble:
