@@ -171,6 +171,9 @@ export async function runVoiceTurn(
     console.info('[voice] reply repeats the preamble the caller just heard; not speaking it twice');
     spoken = { ok: true, playedMs: 0, interrupted: false, firstAudioMs: null };
   } else {
+    // Mark it before playback, not after: the model's next message can arrive
+    // while this one is still playing, and its repeat check must see this mark.
+    await state.updateMessage(message.id, { metadata: { voice: { spoken: true } } });
     spoken = await speak(streams, voice.tts, text, { bargeIn: true });
   }
   if (!spoken.ok) {
@@ -195,8 +198,6 @@ export async function runVoiceTurn(
       content: heard ? `${heard} —` : '—',
       metadata: { voice: { spoken: true, interrupted: true, fullText: text, playedMs: Math.round(spoken.playedMs) } },
     });
-  } else if (spoken.playedMs > 0) {
-    await state.updateMessage(message.id, { metadata: { voice: { spoken: true } } });
   }
 
   // Words written alongside a tool call ("Let me check that.") are a preamble:
