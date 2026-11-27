@@ -105,3 +105,17 @@ test('open orders never arrive on a Sunday', () => {
   const found = lookupOrder({ spoken: '555' }, friday); // due in 2 days: a Sunday
   assert.equal(found.outcome === 'found' && found.card.deliveryLabel, 'Arrives Monday, November 30');
 });
+
+test('a change with only instructions stores no empty fields', () => {
+  // Builder refuses undefined inside a thread value; this broke "leave it by the garage".
+  const hasUndefined = (value: object) => Object.values(value).some((v) => v === undefined);
+  const plan = planDeliveryChange(findOrder('111')!, { day: '', instructions: 'by the garage' }, today);
+  assert.ok(plan.ok);
+  const pending = plan.ok ? plan.pending : (null as never);
+  assert.equal(hasUndefined(pending), false);
+  assert.equal('deliveryInDays' in pending, false);
+  assert.equal(hasUndefined(applyChange(pending)), false);
+
+  const dayOnly = planDeliveryChange(findOrder('222')!, { day: 'Monday' }, today);
+  assert.ok(dayOnly.ok && !('instructions' in dayOnly.pending));
+});
