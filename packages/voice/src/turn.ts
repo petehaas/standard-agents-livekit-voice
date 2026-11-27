@@ -1,8 +1,8 @@
 import type { Message, ThreadState } from '@standardagents/spec';
-import { heardPortion } from './audio.ts';
-import { CALL_ENDED_KEY, NO_RESPONSE, UNINTELLIGIBLE } from './call.ts';
-import type { VoiceConfig } from './config.ts';
-import { caption, hangup, listen, speak } from './streams.ts';
+import { heardPortion } from './audio.js';
+import { CALL_ENDED_KEY, NO_RESPONSE, UNINTELLIGIBLE } from './call.js';
+import type { VoiceConfig } from './config.js';
+import { caption, hangup, listen, speak } from './streams.js';
 
 const LISTEN = { endSilenceMs: 400, noSpeechTimeoutMs: 8_000, maxUtteranceMs: 30_000 };
 /** After a trailing "and…", wait this long for the rest before answering what we have. */

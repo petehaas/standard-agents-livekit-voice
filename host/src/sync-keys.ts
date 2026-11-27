@@ -9,8 +9,7 @@
 import 'dotenv/config';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { resolveToken } from './auth.js';
-import { log } from './log.js';
+import { log, resolveToken } from 'standardagent-livekit-host';
 
 const NAMES = ['OPENAI_API_KEY', 'DEEPGRAM_API_KEY', 'ELEVENLABS_API_KEY', 'ELEVENLABS_VOICE_ID'];
 const TEXT_NAMES = new Set(['ELEVENLABS_VOICE_ID']);
@@ -51,7 +50,8 @@ async function main() {
   log.info('keys', `set instance variables: ${Object.keys(envPatch).join(', ')}`);
 }
 
-main().catch((error) => {
+// Exit explicitly: the host package loads LiveKit's native module, which keeps the event loop alive.
+main().then(() => process.exit(0), (error) => {
   log.error('keys', error instanceof Error ? error.message : String(error));
   process.exit(1);
 });

@@ -1,4 +1,4 @@
-import type { HangupMetadata } from '../../../agent/src/voice/protocol.ts';
+import type { HangupMetadata } from 'standardagent-livekit-voice/protocol';
 import type { HostStream } from '../bridge.js';
 import { log } from '../log.js';
 

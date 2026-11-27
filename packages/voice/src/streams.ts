@@ -4,8 +4,8 @@
  * stream before it returns.
  */
 import type { RuntimeByteStream, RuntimeStreamErrorCode, RuntimeStreams } from '@standardagents/spec';
-import { concatBytes } from './audio.ts';
-import type { TextToSpeech } from './providers.ts';
+import { concatBytes } from './audio.js';
+import type { TextToSpeech } from './providers.js';
 import {
   bytesPerMs,
   CAPABILITY,
@@ -19,7 +19,7 @@ import {
   type ShowMetadata,
   type SpeakMetadata,
   type SpeakReport,
-} from './protocol.ts';
+} from './protocol.js';
 
 export type StreamFailure = { ok: false; error: string; code?: RuntimeStreamErrorCode };
 
@@ -220,7 +220,7 @@ export async function listen(
 }
 
 /**
- * Ask the host to put an order card on the caller's screen.
+ * Ask the host to put a card on the caller's screen.
  * The host performs the LiveKit RPC; this side only sends the card.
  */
 export async function showCard(

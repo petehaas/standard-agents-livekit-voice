@@ -1,7 +1,7 @@
 import { defineTool } from '@standardagents/spec';
 import { z } from 'zod';
 import { describeLookup, lookupOrder } from '../../src/orders.ts';
-import { showCard } from '../../src/voice/streams.ts';
+import { showCard } from 'standardagent-livekit-voice';
 
 export default defineTool({
   description:

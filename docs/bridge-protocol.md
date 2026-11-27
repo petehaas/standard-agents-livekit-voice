@@ -55,5 +55,5 @@ Notes from building this demo, offered as input to a proposal:
 
 1. **A host connection contract.** Any runtime that implements `runtimeStreams` needs an answer to "how does a host attach?". The frame set above is small, and it could be specified as-is or in an abstract form.
 2. **Capability discovery.** Today an agent learns a capability is missing only by opening it. A host could announce its capabilities on connect (`bridge_ready.capabilities`), and `ThreadState` could expose them.
-3. **Well-known capability names.** Opaque names keep the spec small, but voice is common enough that a shared vocabulary (`audio.speak`, `audio.listen`) plus a shared metadata shape (format, rate, channels) would let agent packages and hosts mix and match. `agent/src/voice/protocol.ts` here is one candidate.
+3. **Well-known capability names.** Opaque names keep the spec small, but voice is common enough that a shared vocabulary (`audio.speak`, `audio.listen`) plus a shared metadata shape (format, rate, channels) would let agent packages and hosts mix and match. `packages/voice/src/protocol.ts` here is one candidate.
 4. **Out-of-band status on a stream.** The speak capability returns its playback report as an NDJSON line on the byte stream. A small typed status channel would be cleaner for control messages like "interrupted at 1.7 s".
