@@ -10,7 +10,9 @@ The Standard Agent Specification has no voice support today. This repo shows tha
 - **Only spec APIs on the agent side.** The voice code uses `ThreadState` from the spec (runtime streams, thread values, messages, env), so it should run on any runtime that implements runtime streams.
 - **Capability names are a proposal.** The spec treats capability names as opaque and defines none for audio. `livekit.speak`, `livekit.listen`, and the rest are this repo's contract, offered as a starting point for a shared vocabulary ([docs/bridge-protocol.md](docs/bridge-protocol.md)).
 
-![One voice turn: the caller's browser, LiveKit, the execution host, and the Standard Agents runtime with its two sides, speech to text, and text to speech](diagrams/voice-architecture.png)
+![One voice turn in 12 steps: the caller's browser, LiveKit, and the execution host; inside the Standard Agents Builder runtime, side B (the only part that touches audio, with speech to text and text to speech) and side A exchange text only through thread messages. Tool cards reach the screen over the livekit.show runtime stream.](diagrams/voice-architecture.png)
+
+The diagram is drawn by [diagrams/voice-architecture.py](diagrams/voice-architecture.py); edit that and regenerate the SVG.
 
 ## How a turn works
 
