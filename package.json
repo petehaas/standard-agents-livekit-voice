@@ -12,7 +12,7 @@
     "dev": "npm run dev -w agent",
     "start": "npm start -w host",
     "probe": "npm run probe -w host",
-    "build": "npm run build -w standardagent-livekit-voice && npm run build -w standardagent-livekit-host",
+    "build": "npm run build -w @petehaas/standard-agents-livekit-voice && npm run build -w @petehaas/standard-agents-livekit-host",
     "postinstall": "npm run build",
     "typecheck": "npm run typecheck --workspaces --if-present",
     "test": "npm test --workspaces --if-present"

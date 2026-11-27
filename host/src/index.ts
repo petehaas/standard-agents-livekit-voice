@@ -1,8 +1,8 @@
 /**
- * The support desk demo: runs standardagent-livekit-host for the
+ * The support desk demo: runs @petehaas/standard-agents-livekit-host for the
  * voice_concierge agent and serves a local page for the caller.
  */
-import { log, resolveToken, startVoiceHost } from 'standardagent-livekit-host';
+import { log, resolveToken, startVoiceHost } from '@petehaas/standard-agents-livekit-host';
 import { loadConfig } from './config.js';
 import { startDesk } from './desk.js';
 

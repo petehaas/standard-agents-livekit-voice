@@ -1,8 +1,14 @@
-# Standard Agents × LiveKit: voice over runtime streams
+# Real-time voice for Standard Agents, using LiveKit
 
-A [Standard Agent](https://standardagentspec.org) that holds a real-time voice conversation in a [LiveKit](https://livekit.io) room. The agent never touches LiveKit. Audio moves through the spec's **runtime streams** (`state.runtimeStreams.open()`) to a small **execution host** that bridges a LiveKit room.
+An independent project built on the [Standard Agent Specification](https://standardagentspec.org) 0.2.0. It is not affiliated with Standard Agents or LiveKit.
 
-The Standard Agent Specification has no voice support today. This repo shows that the existing primitives are enough to build it, and where a spec-level voice capability could start.
+A Standard Agent that holds a real-time voice conversation in a [LiveKit](https://livekit.io) room. The agent never touches LiveKit. Audio moves through the spec's **runtime streams** (`state.runtimeStreams.open()`) to a small **execution host** that bridges a LiveKit room.
+
+The Standard Agent Specification has no voice support today. This repo shows that the existing primitives are enough to build it, and where a spec-level voice capability could start:
+
+- **Voice is just a side.** The spec gives an agent two sides, each a human, a prompt, or a handler. Here side A is an ordinary prompt and side B is a handler that speaks and listens.
+- **Only spec APIs on the agent side.** The voice code uses `ThreadState` from the spec (runtime streams, thread values, messages, env), so it should run on any runtime that implements runtime streams.
+- **Capability names are a proposal.** The spec treats capability names as opaque and defines none for audio. `livekit.speak`, `livekit.listen`, and the rest are this repo's contract, offered as a starting point for a shared vocabulary ([docs/bridge-protocol.md](docs/bridge-protocol.md)).
 
 ![One voice turn: the caller's browser, LiveKit, the execution host, and the Standard Agents runtime with its two sides, speech to text, and text to speech](diagrams/voice-architecture.png)
 
@@ -200,23 +206,27 @@ The voice bridge is two reusable npm packages. The demo in `agent/` and `host/` 
 
 | Package | Side | What it gives you |
 | --- | --- | --- |
-| [`standardagent-livekit-voice`](packages/voice) | runtime (agent code) | the `voice_caller` side B handler, the `end_call` tool, speak / listen / show / caption / hangup over runtime streams, STT and TTS providers, and the `livekit.*` capability protocol (`standardagent-livekit-voice/protocol`) |
-| [`standardagent-livekit-host`](packages/host) | execution host (Node) | `startVoiceHost()`: creates a thread, serves the `livekit.*` capabilities, joins the LiveKit room, and runs Silero VAD, endpointing, and barge-in |
+| [`@petehaas/standard-agents-livekit-voice`](packages/voice) | runtime (agent code) | the `voice_caller` side B handler, the `end_call` tool, speak / listen / show / caption / hangup over runtime streams, STT and TTS providers, and the `livekit.*` capability protocol (`@petehaas/standard-agents-livekit-voice/protocol`) |
+| [`@petehaas/standard-agents-livekit-host`](packages/host) | execution host (Node) | `startVoiceHost()`: creates a thread, serves the `livekit.*` capabilities, joins the LiveKit room, and runs Silero VAD, endpointing, and barge-in |
 
-The voice package uses only `state.runtimeStreams`, `fetch`, and `WebSocket`, so it isn't tied to one runtime. The host speaks the Builder's bridge protocol today ([docs/bridge-protocol.md](docs/bridge-protocol.md)).
+These are helper libraries, not packed agent packages, so they don't use the spec's `standardagent-` name prefix or `standardagent` keyword; those mark agent packages for runtime discovery. The demo agent could be packed as one later.
+
+The voice package uses only `ThreadState` APIs from the spec plus `fetch` and `WebSocket`, so it isn't tied to one runtime. The host is tied to one today: the spec doesn't yet define how an execution host attaches to a runtime, so it uses Standard Agents Builder's bridge ([docs/bridge-protocol.md](docs/bridge-protocol.md)).
+
+Versions: `@standardagents/spec` 0.45.10, the npm package these build against, implements Standard Agent Specification 0.2.0.
 
 ## Layout
 
 `agent/agents/` follows the Standard Agents Builder's standard layout: one folder per kind of definition (`agents/`, `handlers/`, `prompts/`, `tools/`, `models/`), discovered by the Builder's Vite plugin. That is why the path reads `agent/agents/agents/`. Keeping the standard layout means the agent package looks like any other Standard Agents project.
 
 ```
-packages/voice/                      standardagent-livekit-voice (runtime side)
+packages/voice/                      @petehaas/standard-agents-livekit-voice (runtime side)
   src/protocol.ts                      the capability contract, shared with the host
   src/turn.ts                          one voice turn: speak, listen, transcribe, inject
   src/streams.ts                       runtime side of speak / listen / show / caption / hangup
   src/providers.ts, src/config.ts      OpenAI, Deepgram, ElevenLabs; chosen from thread env
   src/definitions.ts                   voice_caller handler and end_call tool options
-packages/host/                       standardagent-livekit-host (execution host)
+packages/host/                       @petehaas/standard-agents-livekit-host (execution host)
   src/host.ts                          startVoiceHost()
   src/bridge.ts                        execution-host side of the runtime stream protocol
   src/capabilities/                    speak (playback + barge-in), listen (endpointing), show, caption, hangup

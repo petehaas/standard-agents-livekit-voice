@@ -1,4 +1,4 @@
 import { defineTool } from '@standardagents/spec';
-import { endCallTool } from 'standardagent-livekit-voice';
+import { endCallTool } from '@petehaas/standard-agents-livekit-voice';
 
 export default defineTool(endCallTool);

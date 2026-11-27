@@ -9,7 +9,7 @@
 import 'dotenv/config';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { log, resolveToken } from 'standardagent-livekit-host';
+import { log, resolveToken } from '@petehaas/standard-agents-livekit-host';
 
 const NAMES = ['OPENAI_API_KEY', 'DEEPGRAM_API_KEY', 'ELEVENLABS_API_KEY', 'ELEVENLABS_VOICE_ID'];
 const TEXT_NAMES = new Set(['ELEVENLABS_VOICE_ID']);

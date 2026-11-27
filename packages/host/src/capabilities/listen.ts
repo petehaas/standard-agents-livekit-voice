@@ -1,4 +1,4 @@
-import { LISTEN_SAMPLE_RATE, VOICE_PROTOCOL, type ListenMetadata } from 'standardagent-livekit-voice/protocol';
+import { LISTEN_SAMPLE_RATE, VOICE_PROTOCOL, type ListenMetadata } from '@petehaas/standard-agents-livekit-voice/protocol';
 import type { HostStream } from '../bridge.js';
 import { log } from '../log.js';
 import { FRAME_MS, framesToBytes, type MicTap } from '../mic.js';

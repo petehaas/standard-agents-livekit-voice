@@ -1,7 +1,7 @@
 import { defineHandler } from '@standardagents/spec';
-import type { TextToSpeech } from 'standardagent-livekit-voice';
-import { SPEAK_SAMPLE_RATE } from 'standardagent-livekit-voice';
-import { listen, speak } from 'standardagent-livekit-voice';
+import type { TextToSpeech } from '@petehaas/standard-agents-livekit-voice';
+import { SPEAK_SAMPLE_RATE } from '@petehaas/standard-agents-livekit-voice';
+import { listen, speak } from '@petehaas/standard-agents-livekit-voice';
 
 /** 600 ms of a quiet 440 Hz tone, in 100 ms chunks. Stands in for a TTS provider. */
 const toneTts: TextToSpeech = {

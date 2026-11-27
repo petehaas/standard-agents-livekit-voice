@@ -4,7 +4,7 @@
  * their yes. Code owns this state; the model only asks for changes.
  */
 import type { ThreadState } from '@standardagents/spec';
-import { showCard } from 'standardagent-livekit-voice';
+import { showCard } from '@petehaas/standard-agents-livekit-voice';
 import { CHANGES_KEY, CURRENT_ORDER_KEY, findOrder, PENDING_KEY, type PendingChange } from './fulfillment.ts';
 import type { OrderChanges, OrderRecord } from './orders.ts';
 

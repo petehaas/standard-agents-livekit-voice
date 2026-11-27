@@ -20,7 +20,7 @@ import {
   VideoFrame,
   VideoSource,
 } from '@livekit/rtc-node';
-import { CALL_EVENTS_TOPIC, SHOW_CARD_RPC, SPEAK_SAMPLE_RATE } from 'standardagent-livekit-voice/protocol';
+import { CALL_EVENTS_TOPIC, SHOW_CARD_RPC, SPEAK_SAMPLE_RATE } from '@petehaas/standard-agents-livekit-voice/protocol';
 import type { Speaker } from './capabilities/speak.js';
 import { log } from './log.js';
 import { FRAME_MS, MIC_SAMPLE_RATE, type MicTap } from './mic.js';

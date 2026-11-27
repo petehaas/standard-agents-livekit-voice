@@ -1,15 +1,17 @@
-# standardagent-livekit-host
+# @petehaas/standard-agents-livekit-host
 
-An execution host that connects a [Standard Agents](https://standardagentspec.org) thread to a [LiveKit](https://livekit.io) room. It serves the `livekit.*` runtime-stream capabilities from [`standardagent-livekit-voice`](../voice). It plays the agent's audio into the room and runs Silero voice activity detection on the caller's mic. It also decides where the caller's turn ends and handles barge-in.
+An independent project, not affiliated with Standard Agents or LiveKit.
+
+An execution host that connects a [Standard Agent Specification](https://standardagentspec.org) 0.2.0 thread to a [LiveKit](https://livekit.io) room. It serves the `livekit.*` runtime-stream capabilities from [`@petehaas/standard-agents-livekit-voice`](../voice). It plays the agent's audio into the room and runs Silero voice activity detection on the caller's mic. It also decides where the caller's turn ends and handles barge-in.
 
 ```bash
-npm install standardagent-livekit-host
+npm install @petehaas/standard-agents-livekit-host
 ```
 
 ## Start a call
 
 ```ts
-import { resolveToken, startVoiceHost } from 'standardagent-livekit-host';
+import { resolveToken, startVoiceHost } from '@petehaas/standard-agents-livekit-host';
 
 const baseUrl = 'http://127.0.0.1:5173';
 const host = await startVoiceHost({
@@ -40,6 +42,6 @@ The lower-level pieces are exported too: `ExecutionHostBridge`, `serveSpeak`, `s
 
 ## Runtime support
 
-The host attaches to the thread with the Standard Agents Builder bridge protocol, described in [docs/bridge-protocol.md](../../docs/bridge-protocol.md). The spec does not yet define how an execution host attaches.
+The spec defines runtime streams from the agent's side, but not yet how an execution host attaches to a runtime. This host attaches the way Standard Agents Builder does, described in [docs/bridge-protocol.md](../../docs/bridge-protocol.md). Terms such as "execution owner", "bridge", and the `media_host` client kind are Builder's, not the spec's. Another runtime needs its own attach step; the capability handlers (`serveSpeak`, `serveListen`, and the rest) don't depend on it.
 
 Node 22+. Includes [Silero VAD](https://github.com/snakers4/silero-vad) (`models/silero_vad.onnx`, MIT). MIT license.
