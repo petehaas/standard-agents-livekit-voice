@@ -1,7 +1,7 @@
 """Draws diagrams/voice-architecture.svg. Run: python3 diagrams/voice-architecture.py diagrams/voice-architecture.svg
 Then rasterize the SVG to voice-architecture.png at 2400 px wide (any SVG renderer)."""
 import sys
-W,H=2400,1720
+W,H=2400,1760
 out=[]
 def a(s): out.append(s)
 ORANGE=('#fdf1e4','#b8732e'); TEAL=('#e6f4f4','#2e8a8f'); IND=('#eceef9','#4b54a8'); NEU=('#ffffff','#7a7f99')
@@ -53,51 +53,54 @@ arrow([(1660,330),(1424,330)]); label(1482,388,11,'#2e8a8f',['voice'])
 arrow([(860,330),(664,330)]); label(722,388,12,'#2e8a8f',['hear'])
 
 # Runtime container
-a("<rect x='60' y='560' width='2280' height='1100' rx='34' fill='#f5f6fc' stroke='#4b54a8' stroke-width='4' stroke-dasharray='18 12'/>")
+a("<rect x='60' y='560' width='2280' height='1140' rx='34' fill='#f5f6fc' stroke='#4b54a8' stroke-width='4' stroke-dasharray='18 12'/>")
 note(110,626,['Standard Agents Builder runtime · Cloudflare Workers'],size=34,weight='700')
-note(110,670,['Standard Agent Specification 0.2.0 · one agent, two sides that only exchange text'],size=27)
+note(110,670,['Standard Agent Specification 0.2.0'],size=27)
 
-# voice package container
-a("<rect x='1600' y='720' width='720' height='860' rx='26' fill='none' stroke='#4b54a8' stroke-width='3' stroke-dasharray='6 8'/>")
-tag(1960,1580,'@petehaas/standard-agents-livekit-voice','#4b54a8','mid')
+# The Standard Agent: both sides plus the thread between them
+a("<rect x='80' y='770' width='2240' height='360' rx='28' fill='#e3e6f6' stroke='#4b54a8' stroke-width='3'/>")
+a("<text x='1140' y='808' text-anchor='middle' font-size='30' font-weight='700' fill='#4b54a8'>Standard Agent · voice_concierge</text>")
+a("<text x='1140' y='1118' text-anchor='middle' font-size='22' fill='#4b54a8'>one agent, two sides that only exchange text (demo)</text>")
 
-box(100,780,560,260,IND,'Side A · voice_concierge',['prompt + reply model','tools: look up, track,','change, return'],ts=38,ls=27)
-tag(380,1068,'demo','#b8732e','mid')
-box(880,780,520,260,NEU,'Thread messages',['the only link','between the sides'],ts=38)
-box(1660,780,600,260,IND,'Side B · voice_caller',['handler, no model','the only part that','touches audio'],ts=38,ls=27)
-box(1640,1260,300,240,IND,'Speech to text',['Deepgram (live)','or OpenAI'],ts=32,ls=26)
-box(1980,1260,300,240,IND,'Text to speech',['Deepgram, OpenAI,','or ElevenLabs'],ts=32,ls=26)
+box(100,840,560,260,IND,'Side A · prompt',['order_support','reply model + tools: look up,','track, change, return'],ts=38,ls=26)
+box(880,840,520,240,NEU,'Thread messages',['the only link','between the sides'],ts=36)
+box(1660,840,600,260,IND,'Side B · handler',['voice_caller · no model','the only part with audio','from the voice package'],ts=38,ls=26)
+
+# voice package: side B's handler and the speech services
+a("<rect x='1600' y='1150' width='720' height='500' rx='26' fill='none' stroke='#4b54a8' stroke-width='3' stroke-dasharray='6 8'/>")
+box(1640,1300,300,240,IND,'Speech to text',['Deepgram (live)','or OpenAI'],ts=32,ls=26)
+box(1980,1300,300,240,IND,'Text to speech',['Deepgram, OpenAI,','or ElevenLabs'],ts=32,ls=26)
+a("<text x='1790' y='1580' text-anchor='middle' font-size='22' fill='#2b2b33'>4  transcribe, live</text><text x='2130' y='1580' text-anchor='middle' font-size='22' fill='#2b2b33'>9  synthesize, streamed</text>")
+tag(1960,1650,'@petehaas/standard-agents-livekit-voice','#4b54a8','mid')
 
 # host <-> side B (runtime streams)
-arrow([(1860,410),(1860,776)]); label(1892,470,3,'#2e8a8f',['listen','16 kHz'],bg=True)
-arrow([(2140,776),(2140,414)]); label(2172,470,10,'#4b54a8',['speak','24 kHz'],bg=True)
+arrow([(1860,410),(1860,836)]); label(1892,470,3,'#2e8a8f',['listen','16 kHz'],bg=True)
+arrow([(2140,836),(2140,414)]); label(2172,470,10,'#4b54a8',['speak','24 kHz'],bg=True)
 a("<rect x='1636' y='676' width='650' height='34' fill='#f5f6fc'/>")
 note(1648,702,['3 and 10 are runtime streams (PCM)'],col='#2b2b33',size=24)
 
 # B <-> thread
-arrow([(1660,860),(1404,860)]); label(1430,820,5,'#4b54a8',[''])
-arrow([(1400,960),(1656,960)]); label(1430,1000,8,'#4b54a8',[''])
-note(1336,1110,['5  caller’s words,','    as side B’s message','8  side A’s reply'],col='#2b2b33',size=22)
+arrow([(1660,920),(1404,920)]); badge(1430,880,5,'#4b54a8')
+arrow([(1400,1020),(1656,1020)]); badge(1430,1060,8,'#4b54a8')
 # thread <-> A
-arrow([(880,860),(664,860)]); label(700,820,6,'#4b54a8',[''])
-arrow([(660,960),(876,960)]); label(700,1000,7,'#4b54a8',[''])
-note(690,1110,['6  side A’s turn','7  reply text'],col='#2b2b33',size=24)
+arrow([(880,920),(664,920)]); badge(700,880,6,'#4b54a8')
+arrow([(660,1020),(876,1020)]); badge(700,1060,7,'#4b54a8')
+note(130,1180,['5  caller’s words, as side B’s message   ·   6  side A’s turn','7  reply text   ·   8  side B’s turn: speak the reply'],col='#2b2b33',size=24)
 
 # B <-> STT / TTS
-arrow([(1740,1040),(1740,1256)]); arrow([(1840,1256),(1840,1044)]); label(1760,1150,4,'#4b54a8',[''])
-arrow([(2080,1040),(2080,1256)]); arrow([(2180,1256),(2180,1044)]); label(2100,1150,9,'#4b54a8',[''])
-a("<text x='1790' y='1540' text-anchor='middle' font-size='22' fill='#2b2b33'>4  transcribe, live</text><text x='2130' y='1540' text-anchor='middle' font-size='22' fill='#2b2b33'>9  synthesize, streamed</text>")
+arrow([(1740,1100),(1740,1296)]); arrow([(1840,1296),(1840,1104)]); badge(1760,1225,4,'#4b54a8')
+arrow([(2080,1100),(2080,1296)]); arrow([(2180,1296),(2180,1104)]); badge(2100,1225,9,'#4b54a8')
 
 # cards path (dashed)
-arrow([(300,780),(300,736),(1440,736),(1440,480),(1700,480),(1700,414)],dashed=True,color='#b8732e')
-note(330,722,['tools put cards on screen: livekit.show runtime stream → host → show_card RPC → desk'],col='#b8732e',size=22)
+arrow([(600,840),(600,736),(1440,736),(1440,480),(1700,480),(1700,414)],dashed=True,color='#b8732e')
+note(630,722,['tool cards: livekit.show stream → host → show_card RPC → desk'],col='#b8732e',size=22)
 
 # spec note
-a("<rect x='100' y='1380' width='1380' height='190' rx='20' fill='#ffffff' stroke='#c9cce3' stroke-width='2'/>")
-note(130,1430,['Spec surface the voice package uses (ThreadState):'],col='#1b1b1f',size=26,weight='700')
-note(130,1474,['runtime streams · thread messages · thread values · env'],col='#2b2b33',size=26)
-note(130,1518,['Capability names (livekit.*) are this repo’s proposal. The spec keeps them'],col='#5a5d70',size=23)
-note(130,1550,['opaque and does not yet define how an execution host attaches.'],col='#5a5d70',size=23)
+a("<rect x='100' y='1290' width='1380' height='190' rx='20' fill='#ffffff' stroke='#c9cce3' stroke-width='2'/>")
+note(130,1340,['Spec surface the voice package uses (ThreadState):'],col='#1b1b1f',size=26,weight='700')
+note(130,1384,['runtime streams · thread messages · thread values · env'],col='#2b2b33',size=26)
+note(130,1428,['Capability names (livekit.*) are this repo’s proposal. The spec keeps them'],col='#5a5d70',size=23)
+note(130,1460,['opaque and does not yet define how an execution host attaches.'],col='#5a5d70',size=23)
 
 a("</svg>")
 open(sys.argv[1],'w').write('\n'.join(out))
