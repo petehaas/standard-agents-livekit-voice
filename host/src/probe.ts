@@ -5,7 +5,7 @@
  * the agent saw on each capability.
  */
 import 'dotenv/config';
-import { CAPABILITY } from 'standardagent-livekit-voice/protocol';
+import { CAPABILITY } from '@petehaas/standard-agents-livekit-voice/protocol';
 import {
   ExecutionHostBridge,
   FRAME_SAMPLES,
@@ -16,7 +16,7 @@ import {
   serveSpeak,
   ThreadsApi,
   type Speaker,
-} from 'standardagent-livekit-host';
+} from '@petehaas/standard-agents-livekit-host';
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 

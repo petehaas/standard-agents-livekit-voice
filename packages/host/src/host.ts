@@ -10,7 +10,7 @@
  *    the agent drives the call; the host only moves audio.
  */
 import { AccessToken, TrackSource } from 'livekit-server-sdk';
-import { CALL_CONNECTED, CAPABILITY } from 'standardagent-livekit-voice/protocol';
+import { CALL_CONNECTED, CAPABILITY } from '@petehaas/standard-agents-livekit-voice/protocol';
 import { ExecutionHostBridge } from './bridge.js';
 import { serveCaption } from './capabilities/caption.js';
 import { serveHangup } from './capabilities/hangup.js';

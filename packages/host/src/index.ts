@@ -1,7 +1,7 @@
 /**
- * standardagent-livekit-host: an execution host that bridges a Standard
+ * @petehaas/standard-agents-livekit-host: an execution host that bridges a Standard
  * Agents thread's runtime streams to a LiveKit room. It serves the
- * `livekit.*` capabilities defined in standardagent-livekit-voice/protocol.
+ * `livekit.*` capabilities defined in @petehaas/standard-agents-livekit-voice/protocol.
  */
 export { startVoiceHost, liveKitToken, type VoiceHost, type VoiceHostOptions, type LiveKitOptions } from './host.js';
 export { resolveToken } from './auth.js';

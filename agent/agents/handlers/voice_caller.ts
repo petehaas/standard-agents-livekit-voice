@@ -1,8 +1,8 @@
 import { defineHandler } from '@standardagents/spec';
-import { voiceCallerHandler } from 'standardagent-livekit-voice';
+import { voiceCallerHandler } from '@petehaas/standard-agents-livekit-voice';
 
 /**
- * The caller's side of a voice call, from standardagent-livekit-voice.
+ * The caller's side of a voice call, from @petehaas/standard-agents-livekit-voice.
  *
  * Side A (a prompt) writes text replies. This handler turns each reply into
  * audio in the LiveKit room, then waits for the caller's next utterance and

@@ -1,16 +1,37 @@
 {
-  "name": "standardagent-livekit-host",
+  "name": "@petehaas/standard-agents-livekit-host",
   "version": "0.1.0",
   "description": "An execution host that bridges Standard Agents runtime streams to a LiveKit room: playback, Silero VAD, endpointing, and barge-in.",
   "license": "MIT",
   "type": "module",
-  "keywords": ["standard-agents", "livekit", "voice", "execution-host", "vad"],
-  "repository": { "type": "git", "url": "git+https://github.com/petehaas/standard-agents-livekit-voice.git", "directory": "packages/host" },
-  "exports": {
-    ".": { "types": "./dist/index.d.ts", "default": "./dist/index.js" }
+  "keywords": [
+    "standard-agents",
+    "livekit",
+    "voice",
+    "execution-host",
+    "vad"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/petehaas/standard-agents-livekit-voice.git",
+    "directory": "packages/host"
   },
-  "files": ["dist", "src", "models", "README.md", "LICENSE"],
-  "engines": { "node": ">=22" },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "src",
+    "models",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc -p tsconfig.test.json",
@@ -22,7 +43,7 @@
     "@livekit/rtc-node": "^1.2.3",
     "livekit-server-sdk": "^2.20.0",
     "onnxruntime-node": "1.24.3",
-    "standardagent-livekit-voice": "^0.1.0",
+    "@petehaas/standard-agents-livekit-voice": "^0.1.0",
     "ws": "^8.18.0"
   },
   "devDependencies": {
@@ -31,5 +52,8 @@
     "@types/ws": "^8.5.0",
     "tsx": "^4.20.0",
     "typescript": "^7.0.0"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }

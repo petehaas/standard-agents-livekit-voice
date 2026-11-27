@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { describeLookup, lookupOrder, ORDERS, spokenDigits } from '../../agent/src/orders.ts';
-import { serveShow, type HostStream } from 'standardagent-livekit-host';
+import { serveShow, type HostStream } from '@petehaas/standard-agents-livekit-host';
 
 const today = new Date(2026, 10, 25); // Wednesday, November 25, 2026
 

@@ -3,7 +3,7 @@ import {
   VOICE_PROTOCOL,
   type SpeakMetadata,
   type SpeakReport,
-} from 'standardagent-livekit-voice/protocol';
+} from '@petehaas/standard-agents-livekit-voice/protocol';
 import type { HostStream } from '../bridge.js';
 import { log } from '../log.js';
 import { FRAME_MS, type MicTap } from '../mic.js';

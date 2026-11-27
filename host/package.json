@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "The demo support desk: runs standardagent-livekit-host for the voice_concierge agent and serves the caller page.",
+  "description": "The demo support desk: runs @petehaas/standard-agents-livekit-host for the voice_concierge agent and serves the caller page.",
   "scripts": {
     "prestart": "tsx src/sync-keys.ts",
     "start": "tsx src/index.ts",
@@ -15,8 +15,8 @@
   "dependencies": {
     "dotenv": "^18.0.0",
     "livekit-client": "2.16.1",
-    "standardagent-livekit-host": "^0.1.0",
-    "standardagent-livekit-voice": "^0.1.0"
+    "@petehaas/standard-agents-livekit-host": "^0.1.0",
+    "@petehaas/standard-agents-livekit-voice": "^0.1.0"
   },
   "devDependencies": {
     "@types/node": "^24.0.0",

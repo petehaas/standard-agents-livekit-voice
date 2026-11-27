@@ -1,4 +1,4 @@
-import { VOICE_PROTOCOL, type ShowMetadata } from 'standardagent-livekit-voice/protocol';
+import { VOICE_PROTOCOL, type ShowMetadata } from '@petehaas/standard-agents-livekit-voice/protocol';
 import type { HostStream } from '../bridge.js';
 import { log } from '../log.js';
 

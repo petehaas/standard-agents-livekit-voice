@@ -5,12 +5,12 @@
  *
  *   // agents/handlers/voice_caller.ts
  *   import { defineHandler } from '@standardagents/spec';
- *   import { voiceCallerHandler } from 'standardagent-livekit-voice';
+ *   import { voiceCallerHandler } from '@petehaas/standard-agents-livekit-voice';
  *   export default defineHandler(voiceCallerHandler());
  *
  *   // agents/tools/end_call.ts
  *   import { defineTool } from '@standardagents/spec';
- *   import { endCallTool } from 'standardagent-livekit-voice';
+ *   import { endCallTool } from '@petehaas/standard-agents-livekit-voice';
  *   export default defineTool(endCallTool);
  */
 import type { DefineHandlerOptions, DefineToolOptions, ThreadState } from '@standardagents/spec';

@@ -1,9 +1,9 @@
-# standardagent-livekit-voice
+# @petehaas/standard-agents-livekit-voice
 
-The runtime side of a voice call for [Standard Agents](https://standardagentspec.org). A side B handler speaks each side A reply and listens for the caller's answer, all through `state.runtimeStreams`. It never touches LiveKit. An execution host such as [`standardagent-livekit-host`](../host) answers the streams.
+The runtime side of a voice call for agents built on the [Standard Agent Specification](https://standardagentspec.org) 0.2.0. An independent project, not affiliated with Standard Agents or LiveKit. A side B handler speaks each side A reply and listens for the caller's answer, all through `state.runtimeStreams`. It never touches LiveKit. An execution host such as [`@petehaas/standard-agents-livekit-host`](../host) answers the streams.
 
 ```bash
-npm install standardagent-livekit-voice
+npm install @petehaas/standard-agents-livekit-voice
 ```
 
 ## Use it in an agent
@@ -11,12 +11,12 @@ npm install standardagent-livekit-voice
 ```ts
 // agents/handlers/voice_caller.ts
 import { defineHandler } from '@standardagents/spec';
-import { voiceCallerHandler } from 'standardagent-livekit-voice';
+import { voiceCallerHandler } from '@petehaas/standard-agents-livekit-voice';
 export default defineHandler(voiceCallerHandler());
 
 // agents/tools/end_call.ts
 import { defineTool } from '@standardagents/spec';
-import { endCallTool } from 'standardagent-livekit-voice';
+import { endCallTool } from '@petehaas/standard-agents-livekit-voice';
 export default defineTool(endCallTool);
 
 // agents/agents/my_voice_agent.ts
@@ -50,10 +50,12 @@ Or pass your own providers: `voiceCallerHandler({ loadVoice: async (state) => ({
 
 ## The protocol
 
-`standardagent-livekit-voice/protocol` has no dependencies. It defines the capability names (`livekit.speak`, `livekit.listen`, `livekit.show`, `livekit.caption`, `livekit.hangup`), the metadata for each, and the audio format: 16-bit mono PCM, 24 kHz out and 16 kHz in. Any host that serves these capabilities works with this package.
+`@petehaas/standard-agents-livekit-voice/protocol` has no dependencies. It defines the capability names (`livekit.speak`, `livekit.listen`, `livekit.show`, `livekit.caption`, `livekit.hangup`), the metadata for each, and the audio format: 16-bit mono PCM, 24 kHz out and 16 kHz in. Any host that serves these capabilities works with this package.
 
 ## Requirements
 
-A runtime that implements `state.runtimeStreams` (Standard Agents spec 0.2), with `fetch` and `WebSocket` available. It runs on Cloudflare Workers and on Node 22+.
+A runtime that implements runtime streams (`ThreadState.runtimeStreams`, Standard Agent Specification 0.2.0), with `fetch` and `WebSocket` available. Tested on Standard Agents Builder (Cloudflare Workers) and in Node 22+.
+
+This is a helper library, not a packed agent package, so it doesn't carry the spec's `standardagent` keyword. Your agent package does.
 
 MIT license.

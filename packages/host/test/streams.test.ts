@@ -5,9 +5,9 @@
  */
 import assert from 'node:assert/strict';
 import { after, before, test } from 'node:test';
-import { listen, speak } from 'standardagent-livekit-voice';
-import type { TextToSpeech } from 'standardagent-livekit-voice';
-import { CAPABILITY, LISTEN_SAMPLE_RATE } from 'standardagent-livekit-voice/protocol';
+import { listen, speak } from '@petehaas/standard-agents-livekit-voice';
+import type { TextToSpeech } from '@petehaas/standard-agents-livekit-voice';
+import { CAPABILITY, LISTEN_SAMPLE_RATE } from '@petehaas/standard-agents-livekit-voice/protocol';
 import { ExecutionHostBridge } from '../src/bridge.js';
 import { serveListen } from '../src/capabilities/listen.js';
 import { serveSpeak, type Speaker } from '../src/capabilities/speak.js';
