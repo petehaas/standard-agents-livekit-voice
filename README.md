@@ -10,11 +10,15 @@ The Standard Agent Specification has no voice support today. This repo shows tha
 - **Only spec APIs on the agent side.** The voice code uses `ThreadState` from the spec (runtime streams, thread values, messages, env), so it should run on any runtime that implements runtime streams.
 - **Capability names are a proposal.** The spec treats capability names as opaque and defines none for audio. `livekit.speak`, `livekit.listen`, and the rest are this repo's contract, offered as a starting point for a shared vocabulary ([docs/bridge-protocol.md](docs/bridge-protocol.md)).
 
-![One voice turn: the caller's browser, LiveKit, the execution host, and the Standard Agents runtime with its two sides, speech to text, and text to speech](diagrams/voice-architecture.png)
+![One voice turn in 12 steps: the caller's browser, LiveKit, and the execution host; inside the Standard Agents Builder runtime, the Standard Agent voice_concierge is both sides together: side A (the order_support prompt) and side B (the voice_caller handler, the only part that touches audio) exchange text only through thread messages. Tool cards reach the screen over the livekit.show runtime stream.](diagrams/voice-architecture.png)
+
+The diagram is drawn by [diagrams/voice-architecture.py](diagrams/voice-architecture.py); edit that and regenerate the SVG.
 
 ## How a turn works
 
-1. **Side A** is an ordinary prompt. It reads a transcript and writes a short text reply. It doesn't know it's on a call.
+The Standard Agent is `voice_concierge`, and it is both sides together. The spec gives every agent exactly two sides; the runtime alternates turns between them and the thread holds what they say.
+
+1. **Side A** is an ordinary prompt (`order_support`). It reads a transcript and writes a short text reply. It doesn't know it's on a call.
 2. **Side B** is a handler (`voice_caller`), which is deterministic code with no model. On each reply it:
    - calls TTS from the Worker and **pipes the PCM into a `livekit.speak` stream** as it arrives, so playback starts before synthesis ends;
    - opens `livekit.listen` and reads the caller's next utterance back as PCM. With Deepgram, that audio is **transcribed live while the caller is still talking**, so the end of their turn leaves only a short flush;
@@ -233,9 +237,9 @@ packages/host/                       @petehaas/standard-agents-livekit-host (exe
   src/mic.ts, src/silero.ts, src/vad.ts  20 ms framing, Silero VAD, loudness fallback, pre-roll
   src/room.ts, src/events.ts           LiveKit room, orb track, caller mic, captions and timing
 agent/                               demo: Standard Agents Builder project
-  agents/agents/voice_concierge.ts     side A prompt + side B voice handler
+  agents/agents/voice_concierge.ts     the agent: side A order_support prompt + side B voice_caller handler
   agents/handlers/voice_caller.ts      wraps the package's handler
-  agents/prompts/voice_concierge.ts    spoken-style prompt; knows about interruptions
+  agents/prompts/order_support.ts      side A: spoken-style prompt; knows about interruptions
   agents/models/voice_fast.ts          the reply model
   agents/tools/                        lookup_order, track_package, request_delivery_change,
                                        request_return, confirm_change, end_call
