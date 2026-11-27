@@ -24,12 +24,17 @@ export async function pendingChange(state: ThreadState): Promise<PendingChange |
   return state.getValue<PendingChange>(PENDING_KEY);
 }
 
+/** Thread values must be plain JSON. This drops undefined fields, which runtimes may refuse. */
+function plain<T>(value: T): T {
+  return value === null ? value : (JSON.parse(JSON.stringify(value)) as T);
+}
+
 export async function setPending(state: ThreadState, pending: PendingChange | null) {
-  await state.setValue(PENDING_KEY, pending);
+  await state.setValue(PENDING_KEY, plain(pending));
 }
 
 export async function saveChanges(state: ThreadState, orderNumber: string, changes: OrderChanges) {
-  await state.setValue(CHANGES_KEY, { ...(await allChanges(state)), [orderNumber]: changes });
+  await state.setValue(CHANGES_KEY, plain({ ...(await allChanges(state)), [orderNumber]: changes }));
 }
 
 /** The caller's words, newest first. */
