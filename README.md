@@ -140,6 +140,13 @@ Changes take two steps. The model can only propose one (`request_delivery_change
 
 ## The support desk
 
+| | |
+| --- | --- |
+| ![The desk before a call: the orb, a hint toast with the demo order numbers, and the Start call button](screenshots/1-ready.png) | ![Order 111 on screen: the linen throw blanket card with photo, status steps, and arrival date, beside the speaking orb](screenshots/2-order-card.webp) |
+| **Ready.** The hint toast lists the demo orders. | **Lookup.** `lookup_order` puts the order card on screen. |
+| ![Tracking for order 111: a map of the route from Louisville to Brooklyn, the tracking number, and the scan history](screenshots/3-tracking-map.png) | ![A proposed change for order 444, leave it by the driveway, waiting in an amber Change this delivery box above the order card](screenshots/4-confirm-change.png) |
+| **Tracking.** `track_package` draws the route and scan history. | **Confirm.** A proposed change waits on screen for the caller's yes. |
+
 The desk at `http://127.0.0.1:8787/` is the caller's side of the call. It asks for the microphone only and shows:
 
 - **the agent's orb**, a video track the host renders, with an audio-reactive ring drawn in the browser (amber while the agent speaks, cyan while you do);
