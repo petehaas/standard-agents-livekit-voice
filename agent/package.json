@@ -12,7 +12,8 @@
     "@standardagents/builder": "0.45.10",
     "@standardagents/openai": "0.45.10",
     "@standardagents/spec": "0.45.10",
-    "zod": "^4.0.0"
+    "zod": "^4.0.0",
+    "@petehaas/standard-agents-livekit-voice": "^0.1.0"
   },
   "devDependencies": {
     "typescript": "^7.0.0",

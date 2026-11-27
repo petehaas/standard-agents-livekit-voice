@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { heardPortion, pcmToWav } from '../../agent/src/voice/audio.js';
-import { LISTEN_SAMPLE_RATE, PCM_FORMAT, VOICE_PROTOCOL } from '../../agent/src/voice/protocol.ts';
+import { heardPortion, pcmToWav } from '@petehaas/standard-agents-livekit-voice';
+import { LISTEN_SAMPLE_RATE, PCM_FORMAT, VOICE_PROTOCOL } from '@petehaas/standard-agents-livekit-voice/protocol';
 import type { HostStream } from '../src/bridge.js';
 import { serveListen } from '../src/capabilities/listen.js';
 import { frameDb } from '../src/vad.js';
@@ -110,4 +110,21 @@ test('pcmToWav writes a valid 16 kHz mono header', () => {
   assert.equal(view.getUint32(24, true), 16_000);
   assert.equal(view.getUint32(40, true), 3200);
   assert.equal(wav.byteLength, 3244);
+});
+
+test('end_call refuses to hang up before the caller has spoken', async () => {
+  const { endCallTool, CALL_CONNECTED, CALL_ENDED_KEY } = await import('@petehaas/standard-agents-livekit-voice');
+  const values = new Map<string, unknown>();
+  const stateWith = (latest: string) =>
+    ({
+      getMessages: async () => ({ messages: [{ role: 'assistant', content: 'Hi!' }, { role: 'user', content: latest }] }),
+      setValue: async (key: string, value: unknown) => void values.set(key, value),
+    }) as never;
+
+  const early = await endCallTool.execute(stateWith(CALL_CONNECTED), { reason: 'caller said goodbye' });
+  assert.match(String((early as { result: string }).result), /^Not ended/);
+  assert.equal(values.has(CALL_ENDED_KEY), false);
+
+  await endCallTool.execute(stateWith('Okay, thanks, bye!'), { reason: 'caller said goodbye' });
+  assert.equal(values.get(CALL_ENDED_KEY), true);
 });

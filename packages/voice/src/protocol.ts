@@ -19,7 +19,7 @@ export const CAPABILITY = {
   listen: 'livekit.listen',
   /** The host leaves the room once queued audio has played. */
   hangup: 'livekit.hangup',
-  /** The host shows a card on the caller's screen via LiveKit RPC `show_order`. */
+  /** The host shows a card on the caller's screen via LiveKit RPC `show_card`. */
   show: 'livekit.show',
   /** The host shows a line of transcript on the caller's screen. Fire and forget. */
   caption: 'livekit.caption',
@@ -28,8 +28,11 @@ export const CAPABILITY = {
 /** LiveKit data topic the desk listens on for captions, presence, and latency. */
 export const CALL_EVENTS_TOPIC = 'sa-voice.events';
 
-/** RPC method the support desk registers. The host calls it with the order card JSON. */
-export const SHOW_ORDER_RPC = 'show_order';
+/** RPC method the caller's page registers. The host calls it with the card JSON. */
+export const SHOW_CARD_RPC = 'show_card';
+
+/** What the host sends as the first message, once the caller is in the room. */
+export const CALL_CONNECTED = '[caller connected]';
 
 /** All audio on the wire is signed 16-bit little-endian, mono. */
 export const PCM_FORMAT = 'pcm_s16le' as const;
@@ -83,7 +86,7 @@ export type HangupMetadata = {
 
 export type ShowMetadata = {
   protocol: typeof VOICE_PROTOCOL;
-  /** Order card JSON. The host forwards it unchanged to the caller's screen. */
+  /** Card JSON, shaped by the agent. The host forwards it unchanged to the caller's screen. */
   card: Record<string, unknown>;
 };
 

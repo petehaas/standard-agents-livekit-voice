@@ -31,8 +31,23 @@ export interface OrderStep {
   state: 'done' | 'current' | 'upcoming';
 }
 
+/**
+ * What the caller changed during the call. Kept in thread values, so a change
+ * survives the whole call and every later lookup shows it.
+ */
+export interface OrderChanges {
+  /** Replaces the record's deliveryInDays. */
+  deliveryInDays?: number;
+  /** Where to leave the package, in the caller's words. */
+  instructions?: string;
+  /** Set once a return is started. */
+  returnCode?: string;
+  returnReason?: string;
+}
+
 /** What the support desk draws when an order is on screen. */
 export interface OrderCard {
+  kind: 'order';
   customerName: string;
   orderNumber: string;
   item: string;
@@ -47,6 +62,12 @@ export interface OrderCard {
   statusLabel: string;
   deliveryLabel: string;
   steps: OrderStep[];
+  /** Delivery instructions the caller gave. */
+  instructions?: string;
+  /** Present once a return is started. */
+  returnCode?: string;
+  /** A line to flash on the card after a confirmed change. */
+  updated?: string;
 }
 
 export interface FoundOrder {
@@ -168,20 +189,20 @@ export const ORDERS: readonly OrderRecord[] = [
   },
 ];
 
-function day(today: Date, offset: number): Date {
+export function day(today: Date, offset: number): Date {
   return new Date(today.getFullYear(), today.getMonth(), today.getDate() + offset);
 }
 
-function formatDay(date: Date): string {
+export function formatDay(date: Date): string {
   return date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
 }
 
-function money(cents: number): string {
+export function money(cents: number): string {
   const dollars = cents / 100;
   return Number.isInteger(dollars) ? `$${dollars}` : `$${dollars.toFixed(2)}`;
 }
 
-function relative(days: number): string {
+export function relative(days: number): string {
   if (days === 0) return 'today';
   if (days === 1) return 'tomorrow';
   if (days === -1) return 'yesterday';
@@ -197,16 +218,28 @@ function steps(status: OrderStatus): OrderStep[] {
   }));
 }
 
-function present(order: OrderRecord, today: Date): FoundOrder {
+/** Days until delivery. The carrier does not deliver on Sundays, so an open order due on one arrives Monday. */
+export function deliveryDays(order: OrderRecord, today: Date): number {
+  const days = order.deliveryInDays;
+  return order.status !== 'delivered' && day(today, days).getDay() === 0 ? days + 1 : days;
+}
+
+export function present(order: OrderRecord, today: Date, changes: OrderChanges = {}): FoundOrder {
+  if (changes.deliveryInDays !== undefined) order = { ...order, deliveryInDays: changes.deliveryInDays };
+  order = { ...order, deliveryInDays: deliveryDays(order, today) };
   const deliveryDate = formatDay(day(today, order.deliveryInDays));
   const placedDate = formatDay(day(today, -order.placedDaysAgo));
   const deliveryRelative = relative(order.deliveryInDays);
   const statusLabel = STATUS_LABEL[order.status];
   const total = money(order.totalCents);
+  const extra = [
+    changes.instructions ? ` Delivery instructions: ${changes.instructions}.` : '',
+    changes.returnCode ? ` A return is started, return code ${changes.returnCode.split('').join(' ')}.` : '',
+  ].join('');
   const say =
-    order.status === 'delivered'
+    (order.status === 'delivered'
       ? `${order.customerName}'s ${order.item}, order ${order.orderNumber.split('').join(' ')}, was delivered ${deliveryRelative}, on ${deliveryDate}.`
-      : `${order.customerName}'s ${order.item}, order ${order.orderNumber.split('').join(' ')}, is ${statusLabel.toLowerCase()} and should be delivered ${deliveryRelative}, on ${deliveryDate}.`;
+      : `${order.customerName}'s ${order.item}, order ${order.orderNumber.split('').join(' ')}, is ${statusLabel.toLowerCase()} and should be delivered ${deliveryRelative}, on ${deliveryDate}.`) + extra;
   const deliveryLabel =
     order.status === 'delivered' ? `Delivered ${deliveryDate}` : `Arrives ${deliveryDate}`;
   return {
@@ -225,6 +258,7 @@ function present(order: OrderRecord, today: Date): FoundOrder {
     deliveryRelative,
     say,
     card: {
+      kind: 'order',
       customerName: order.customerName,
       orderNumber: order.orderNumber,
       item: order.item,
@@ -239,6 +273,8 @@ function present(order: OrderRecord, today: Date): FoundOrder {
       statusLabel,
       deliveryLabel,
       steps: steps(order.status),
+      instructions: changes.instructions,
+      returnCode: changes.returnCode,
     },
   };
 }
@@ -313,6 +349,7 @@ export function spokenDigits(text: string): string {
 export function lookupOrder(
   input: { spoken?: string; orderNumber?: string; earlier?: string[] },
   today = new Date(),
+  changes: Record<string, OrderChanges> = {},
 ): LookupResult {
   const fromWords = spokenDigits(input.spoken ?? '');
   const fromModel = spokenDigits(input.orderNumber ?? '');
@@ -328,7 +365,7 @@ export function lookupOrder(
   );
   const order = matches.length === 1 ? matches[0] : undefined;
   if (!order && digits.length > ORDER_NUMBER_DIGITS) return { outcome: 'incomplete', heard: digits };
-  return order ? present(order, today) : { outcome: 'none', orderNumber: digits };
+  return order ? present(order, today, changes[order.orderNumber]) : { outcome: 'none', orderNumber: digits };
 }
 
 /** A short text result for the model. The `say` line is the status to speak. */
@@ -354,6 +391,10 @@ export function describeLookup(result: LookupResult, shown: boolean): string {
         `status: ${result.statusLabel}`,
         `delivery: ${result.deliveryDate} (${result.deliveryRelative})`,
         `say: ${result.say}`,
+        result.status === 'delivered'
+          ? 'can do: start a return (request_return).'
+          : 'can do: live tracking on a map (track_package), and change the delivery day or leave delivery instructions (request_delivery_change).',
+        'then: ask one short follow-up question, such as whether you can help with anything else.',
         shown
           ? 'screen: the order is now on the caller\'s screen, so do not read every field aloud.'
           : 'screen: the order card could not be shown. Tell them the status anyway.',

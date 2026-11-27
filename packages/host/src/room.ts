@@ -20,7 +20,7 @@ import {
   VideoFrame,
   VideoSource,
 } from '@livekit/rtc-node';
-import { CALL_EVENTS_TOPIC, SHOW_ORDER_RPC, SPEAK_SAMPLE_RATE } from '../../agent/src/voice/protocol.ts';
+import { CALL_EVENTS_TOPIC, SHOW_CARD_RPC, SPEAK_SAMPLE_RATE } from '@petehaas/standard-agents-livekit-voice/protocol';
 import type { Speaker } from './capabilities/speak.js';
 import { log } from './log.js';
 import { FRAME_MS, MIC_SAMPLE_RATE, type MicTap } from './mic.js';
@@ -91,14 +91,14 @@ export class CallRoom implements CallEvents {
       .catch((error: unknown) => log.warn('livekit', `event not sent: ${error instanceof Error ? error.message : String(error)}`));
   }
 
-  /** Put an order card on the caller's screen. The desk registers `show_order`. */
-  showOrder(payload: string): Promise<string> {
+  /** Put a card on the caller's screen. The caller's page registers `show_card`. */
+  showCard(payload: string): Promise<string> {
     const destinationIdentity = this.callerIdentity;
     const participant = this.room.localParticipant;
     if (!destinationIdentity || !participant) throw new Error('No caller is in the room.');
     return participant.performRpc({
       destinationIdentity,
-      method: SHOW_ORDER_RPC,
+      method: SHOW_CARD_RPC,
       payload,
       responseTimeout: 5_000,
     });

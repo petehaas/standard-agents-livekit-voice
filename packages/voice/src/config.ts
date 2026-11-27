@@ -8,7 +8,7 @@ import {
   openaiTts,
   type SpeechToText,
   type TextToSpeech,
-} from './providers.ts';
+} from './providers.js';
 
 export interface VoiceConfig {
   stt: SpeechToText;
@@ -29,7 +29,7 @@ async function required(state: ThreadState, name: string, why: string): Promise<
   const value = await optional(state, name);
   if (!value) {
     throw new Error(
-      `${name} is not set in the runtime (${why}). Put it in agent/.dev.vars, then run npm start in host/ again; it copies the key over.`,
+      `${name} is not set in the runtime (${why}). Set it as a runtime environment variable for this agent.`,
     );
   }
   return value;

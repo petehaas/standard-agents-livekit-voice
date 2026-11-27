@@ -6,7 +6,7 @@
 export async function resolveToken(baseUrl: string): Promise<string> {
   if (process.env.SA_API_KEY) return process.env.SA_API_KEY;
   const password = process.env.SA_ADMIN_PASSWORD;
-  if (!password) throw new Error('Set SA_ADMIN_PASSWORD (or SA_API_KEY) in host/.env.');
+  if (!password) throw new Error('Set SA_ADMIN_PASSWORD (or SA_API_KEY) in your environment.');
 
   let response: Response;
   try {

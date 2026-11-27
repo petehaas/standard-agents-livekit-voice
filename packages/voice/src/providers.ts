@@ -5,8 +5,8 @@
  * vendor choices, the same way a Standard Agent owns its model choice. The
  * execution host only moves audio and never needs a provider key.
  */
-import { pcmToWav } from './audio.ts';
-import { LISTEN_SAMPLE_RATE, SPEAK_SAMPLE_RATE } from './protocol.ts';
+import { pcmToWav } from './audio.js';
+import { LISTEN_SAMPLE_RATE, SPEAK_SAMPLE_RATE } from './protocol.js';
 
 export interface SpeechToText {
   readonly name: string;
@@ -53,7 +53,7 @@ export function openaiStt(apiKey: string, model: string, language?: string, keyt
       if (language) form.append('language', language);
       // Words the recognizer would otherwise guess at. Short clips can come
       // back in another language even with language=en; a prompt anchors them.
-      if (keyterms.length) form.append('prompt', `Harbor Goods order support call in English. Names: ${keyterms.join(', ')}.`);
+      if (keyterms.length) form.append('prompt', `A phone call. Names and terms: ${keyterms.join(', ')}.`);
       form.append('file', new Blob([pcmToWav(pcm, LISTEN_SAMPLE_RATE)], { type: 'audio/wav' }), 'utterance.wav');
       const response = await fetch('https://api.openai.com/v1/audio/transcriptions', {
         method: 'POST',
@@ -222,8 +222,7 @@ export function deepgramLive(url: string, apiKey: string, open: LiveSocketFactor
  * This is where most of the "expressive" comes from: same words, a warmer read.
  */
 export const DEFAULT_TTS_INSTRUCTIONS =
-  'Warm, upbeat customer support voice. Speak at a brisk, natural pace with friendly energy and real intonation, ' +
-  'smiling through the words. Sound reassuring when news is delayed and pleased when an order has shipped or arrived. ' +
+  'Warm, friendly voice. Speak at a brisk, natural pace with real intonation. ' +
   'Never sound robotic or read like a script.';
 
 export function openaiTts(apiKey: string, model: string, voice: string, instructions?: string): TextToSpeech {

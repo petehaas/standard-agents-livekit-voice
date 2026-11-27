@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import type { AddressInfo } from 'node:net';
 import { WebSocketServer } from 'ws';
-import { deepgramLive } from '../../agent/src/voice/providers.ts';
+import { deepgramLive } from '@petehaas/standard-agents-livekit-voice';
 
 /** A stand-in for Deepgram's live endpoint: one final result per audio message, flushed on CloseStream. */
 async function fakeDeepgram(behavior: 'ok' | 'reject') {
@@ -74,7 +74,7 @@ test('live STT rejects on an abnormal close so the turn can fall back to batch',
 });
 
 test('a reply the model emitted twice is spoken once', async () => {
-  const { collapseRepeat } = await import('../../agent/src/voice/turn.ts');
+  const { collapseRepeat } = await import('@petehaas/standard-agents-livekit-voice');
   const once = 'Please say the name in English, and I’ll look up the order.';
   assert.equal(collapseRepeat(once + once), once);
   assert.equal(collapseRepeat(once), once);
@@ -82,7 +82,7 @@ test('a reply the model emitted twice is spoken once', async () => {
 });
 
 test('a transcript that trails off keeps the turn open; a finished one does not', async () => {
-  const { soundsUnfinished } = await import('../../agent/src/voice/turn.ts');
+  const { soundsUnfinished } = await import('@petehaas/standard-agents-livekit-voice');
   for (const text of ['Okay. And', 'Okay, and.', 'It was for my', 'Um', 'So, uh...', 'The order is,']) {
     assert.equal(soundsUnfinished(text), true, text);
   }
@@ -92,7 +92,7 @@ test('a transcript that trails off keeps the turn open; a finished one does not'
 });
 
 test('a reply that also calls a tool is a preamble, not a turn', async () => {
-  const { hasToolCalls } = await import('../../agent/src/voice/turn.ts');
+  const { hasToolCalls } = await import('@petehaas/standard-agents-livekit-voice');
   assert.equal(hasToolCalls({ tool_calls: '[{"id":"call_1","type":"function"}]' }), true);
   assert.equal(hasToolCalls({ tool_calls: '[]' }), false);
   assert.equal(hasToolCalls({ tool_calls: null }), false);
@@ -100,7 +100,7 @@ test('a reply that also calls a tool is a preamble, not a turn', async () => {
 });
 
 test('a reply that repeats the preamble the caller just heard is not spoken twice', async () => {
-  const { repeatsPrevious } = await import('../../agent/src/voice/turn.ts');
+  const { repeatsPrevious } = await import('@petehaas/standard-agents-livekit-voice');
   const preamble = 'Hi, thanks for calling Harbor Goods. What’s your three-digit order number?';
   assert.equal(repeatsPrevious('What’s your three-digit order number?', preamble), true);
   assert.equal(repeatsPrevious('Order 111 shipped yesterday.', preamble), false);
