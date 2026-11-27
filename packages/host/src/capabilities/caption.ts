@@ -1,4 +1,4 @@
-import { VOICE_PROTOCOL, type CaptionMetadata } from '../../../agent/src/voice/protocol.ts';
+import { VOICE_PROTOCOL, type CaptionMetadata } from 'standardagent-livekit-voice/protocol';
 import type { HostStream } from '../bridge.js';
 import type { CallEvents, TurnClock } from '../events.js';
 

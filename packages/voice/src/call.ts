@@ -9,5 +9,3 @@ export const NO_RESPONSE = '[no response]';
 /** Sound arrived, but speech-to-text found no words. Usually noise, not silence. */
 export const UNINTELLIGIBLE = '[unintelligible]';
 
-/** What the host sends as the first message, once the caller is in the room. */
-export const CALL_CONNECTED = '[caller connected]';

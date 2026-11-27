@@ -1,8 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { describeLookup, lookupOrder, ORDERS, spokenDigits } from '../../agent/src/orders.ts';
-import { serveShow } from '../src/capabilities/show.ts';
-import type { HostStream } from '../src/bridge.ts';
+import { serveShow, type HostStream } from 'standardagent-livekit-host';
 
 const today = new Date(2026, 10, 25); // Wednesday, November 25, 2026
 
@@ -73,7 +72,7 @@ test('show forwards the card payload to the caller', async () => {
     metadata: { protocol: 'sa-voice/0', card: { orderNumber: '111', item: 'linen throw blanket' } },
   } as unknown as HostStream;
   await serveShow(stream, {
-    showOrder: async (body) => {
+    showCard: async (body) => {
       payload = body;
       return 'shown';
     },

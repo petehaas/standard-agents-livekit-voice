@@ -363,8 +363,8 @@
       try {
         const session = await fetch('/session').then((response) => response.json());
         const room = new Room();
-        // Register before connecting so the order card can arrive on the first lookup.
-        room.registerRpcMethod('show_order', async (data) => {
+        // Register before connecting so a card can arrive on the first lookup.
+        room.registerRpcMethod('show_card', async (data) => {
           showCard(JSON.parse(data.payload));
           return 'shown';
         });

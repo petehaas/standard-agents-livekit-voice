@@ -1,17 +1,18 @@
 /**
  * The support desk: a local page the caller opens instead of a meeting app.
  * It shows the agent's orb, asks only for the microphone, and draws an order
- * card when the host makes the `show_order` RPC.
+ * card when the host makes the `show_card` RPC.
  */
 import { createServer, type Server } from 'node:http';
 import { readFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { createRequire } from 'node:module';
 
 const deskDir = join(dirname(fileURLToPath(import.meta.url)), '../desk');
 const clientSdk = join(
-  dirname(fileURLToPath(import.meta.url)),
-  '../node_modules/livekit-client/dist/livekit-client.umd.js',
+  dirname(createRequire(import.meta.url).resolve('livekit-client')),
+  'livekit-client.umd.js',
 );
 
 export interface DeskSession {

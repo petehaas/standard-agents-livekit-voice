@@ -45,9 +45,11 @@ LiveKit carries the audio between the caller's browser and the agent. The free t
 
 ### 2. Start the agent
 
+From the repo root, install everything once. This also builds the two packages in `packages/`.
+
 ```bash
-cd agent
 npm install
+cd agent
 cp .dev.vars.example .dev.vars
 ```
 
@@ -70,7 +72,6 @@ Leave the agent running. In a second terminal, from the repo root:
 
 ```bash
 cd host
-npm install
 cp .env.example .env
 ```
 
@@ -178,41 +179,55 @@ These are host-side, in `host/.env`:
 | `BARGE_IN` / `BARGE_IN_MS` | `on` / `480` | Turn off for speakerphones without echo cancellation |
 | `VAD_MARGIN_DB`, `VAD_MIN_SPEECH_DB` | `12`, `-48` | Only used by the loudness fallback, if Silero fails to load |
 
-The end-of-turn silence window (400 ms) and the trailing-word check are chosen by the agent, in `agent/src/voice/turn.ts`, because how long to wait is a conversation-design decision.
+The end-of-turn silence window (400 ms) and the trailing-word check are chosen by the agent, in `packages/voice/src/turn.ts`, because how long to wait is a conversation-design decision.
+
+## Packages
+
+The voice bridge is two reusable npm packages. The demo in `agent/` and `host/` is built on them, and any other Standard Agent can be too.
+
+| Package | Side | What it gives you |
+| --- | --- | --- |
+| [`standardagent-livekit-voice`](packages/voice) | runtime (agent code) | the `voice_caller` side B handler, the `end_call` tool, speak / listen / show / caption / hangup over runtime streams, STT and TTS providers, and the `livekit.*` capability protocol (`standardagent-livekit-voice/protocol`) |
+| [`standardagent-livekit-host`](packages/host) | execution host (Node) | `startVoiceHost()`: creates a thread, serves the `livekit.*` capabilities, joins the LiveKit room, and runs Silero VAD, endpointing, and barge-in |
+
+The voice package uses only `state.runtimeStreams`, `fetch`, and `WebSocket`, so it isn't tied to one runtime. The host speaks the Builder's bridge protocol today ([docs/bridge-protocol.md](docs/bridge-protocol.md)).
 
 ## Layout
 
 `agent/agents/` follows the Standard Agents Builder's standard layout: one folder per kind of definition (`agents/`, `handlers/`, `prompts/`, `tools/`, `models/`), discovered by the Builder's Vite plugin. That is why the path reads `agent/agents/agents/`. Keeping the standard layout means the agent package looks like any other Standard Agents project.
 
 ```
-agent/                               Standard Agents Builder project
+packages/voice/                      standardagent-livekit-voice (runtime side)
+  src/protocol.ts                      the capability contract, shared with the host
+  src/turn.ts                          one voice turn: speak, listen, transcribe, inject
+  src/streams.ts                       runtime side of speak / listen / show / caption / hangup
+  src/providers.ts, src/config.ts      OpenAI, Deepgram, ElevenLabs; chosen from thread env
+  src/definitions.ts                   voice_caller handler and end_call tool options
+packages/host/                       standardagent-livekit-host (execution host)
+  src/host.ts                          startVoiceHost()
+  src/bridge.ts                        execution-host side of the runtime stream protocol
+  src/capabilities/                    speak (playback + barge-in), listen (endpointing), show, caption, hangup
+  src/mic.ts, src/silero.ts, src/vad.ts  20 ms framing, Silero VAD, loudness fallback, pre-roll
+  src/room.ts, src/events.ts           LiveKit room, orb track, caller mic, captions and timing
+agent/                               demo: Standard Agents Builder project
   agents/agents/voice_concierge.ts     side A prompt + side B voice handler
-  agents/handlers/voice_caller.ts      the voice side (calls src/voice/turn.ts)
+  agents/handlers/voice_caller.ts      wraps the package's handler
   agents/prompts/voice_concierge.ts    spoken-style prompt; knows about interruptions
   agents/models/voice_fast.ts          the reply model
   agents/tools/                        lookup_order, end_call
   agents/agents/stream_probe.ts        keyless self-test agent
   src/orders.ts                        the demo order book and spoken-number parsing
-  src/voice/protocol.ts                the capability contract, shared with the host
-  src/voice/turn.ts                    one voice turn: speak, listen, transcribe, inject
-  src/voice/streams.ts                 runtime side of speak / listen / show / caption / hangup
-  src/voice/providers.ts               OpenAI, Deepgram, ElevenLabs over fetch and WebSocket
-host/                                Node execution host
-  src/bridge.ts                        execution-host side of the runtime stream protocol
-  src/capabilities/                    speak (playback + barge-in), listen (endpointing), show, caption, hangup
-  src/mic.ts, src/silero.ts, src/vad.ts  20 ms framing, Silero VAD, loudness fallback, pre-roll
-  src/room.ts                          LiveKit room, agent voice and orb tracks, caller mic, data events
-  src/events.ts                        captions and voice-to-voice timing
-  src/desk.ts, desk/                   the caller's web page
+host/                                demo: runs startVoiceHost() and serves the caller's page
+  src/index.ts, src/config.ts          wiring and host/.env settings
+  src/desk.ts, desk/                   the support desk page
 docs/bridge-protocol.md              how a host attaches to Builder, and spec notes
 ```
 
 ## Tests
 
 ```bash
-cd host && npm test     # 30 tests, a few seconds
-cd host && npm run typecheck
-cd agent && npm run typecheck
+npm test          # 31 tests across packages/host and host, a few seconds
+npm run typecheck
 ```
 
 The suite runs the agent's real runtime-side stream code against the host's real bridge client over a WebSocket. A mock runtime copies the Builder's stream semantics. It covers playback, barge-in with TTS cancellation, pre-roll after an interruption, endpointing, silence timeouts, refused capabilities, runtime aborts, TTS failures, Silero on recorded speech, order lookup and spoken-number parsing, Deepgram live transcription against a fake socket (including fallback), and the turn-level guards (trailing words, tool preambles, duplicated replies).
@@ -232,7 +247,7 @@ The suite runs the agent's real runtime-side stream code against the host's real
 
 ## Third-party components
 
-- [Silero VAD](https://github.com/snakers4/silero-vad) (`host/models/silero_vad.onnx`), MIT license.
+- [Silero VAD](https://github.com/snakers4/silero-vad) (`packages/host/models/silero_vad.onnx`), MIT license.
 - The product photos in `host/desk/products/` are AI-generated for this demo and are shared under the repository's MIT license.
 - `@livekit/noise-cancellation-node` filters background noise on the caller's mic. It works with LiveKit Cloud; elsewhere the host logs a warning and continues without it.
 
