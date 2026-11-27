@@ -1,6 +1,6 @@
-<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 2400 1720' width='2400' height='1720' font-family='-apple-system, Helvetica Neue, Helvetica, Arial, sans-serif'>
+<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 2400 1760' width='2400' height='1760' font-family='-apple-system, Helvetica Neue, Helvetica, Arial, sans-serif'>
 <defs><marker id='ah' viewBox='0 0 10 10' refX='9' refY='5' markerWidth='6' markerHeight='6' orient='auto-start-reverse'><path d='M0,0 L10,5 L0,10 z' fill='#4a4a52'/></marker><marker id='ahd' viewBox='0 0 10 10' refX='9' refY='5' markerWidth='6' markerHeight='6' orient='auto-start-reverse'><path d='M0,0 L10,5 L0,10 z' fill='#b8732e'/></marker></defs>
-<rect width='2400' height='1720' fill='#ffffff'/>
+<rect width='2400' height='1760' fill='#ffffff'/>
 <text x='1200.0' y='76' text-anchor='middle' font-size='54' font-weight='700' fill='#1b1b1f'>One voice turn, start to finish</text>
 <rect x='100' y='170' width='560' height='240' rx='26' fill='#fdf1e4' stroke='#b8732e' stroke-width='4'/>
 <text x='380.0' y='253.05' text-anchor='middle' font-size='40' font-weight='700' fill='#1b1b1f'>Support desk</text>
@@ -30,43 +30,45 @@
 <path d='M860,330 L664,330' fill='none' stroke='#4a4a52' stroke-width='4' marker-end='url(#ah)'/>
 <circle cx='722' cy='388' r='21' fill='#2e8a8f'/><text x='722' y='397' text-anchor='middle' font-size='25' font-weight='700' fill='#fff'>12</text>
 <text x='758' y='397' font-size='28' fill='#2b2b33'>hear</text>
-<rect x='60' y='560' width='2280' height='1100' rx='34' fill='#f5f6fc' stroke='#4b54a8' stroke-width='4' stroke-dasharray='18 12'/>
+<rect x='60' y='560' width='2280' height='1140' rx='34' fill='#f5f6fc' stroke='#4b54a8' stroke-width='4' stroke-dasharray='18 12'/>
 <text x='110' y='626' font-size='34' font-weight='700' fill='#4b54a8'>Standard Agents Builder runtime · Cloudflare Workers</text>
-<text x='110' y='670' font-size='27' font-weight='400' fill='#4b54a8'>Standard Agent Specification 0.2.0 · one agent, two sides that only exchange text</text>
-<rect x='1600' y='720' width='720' height='860' rx='26' fill='none' stroke='#4b54a8' stroke-width='3' stroke-dasharray='6 8'/>
-<rect x='1704.1' y='1556' width='511.79999999999995' height='36' rx='18' fill='#ffffff' stroke='#4b54a8' stroke-width='2'/>
-<text x='1960.0' y='1581' text-anchor='middle' font-size='21' font-weight='600' fill='#4b54a8'>@petehaas/standard-agents-livekit-voice</text>
-<rect x='100' y='780' width='560' height='260' rx='26' fill='#eceef9' stroke='#4b54a8' stroke-width='4'/>
-<text x='380.0' y='855.225' text-anchor='middle' font-size='38' font-weight='700' fill='#1b1b1f'>Side A · voice_concierge</text>
-<text x='380.0' y='904.2750000000001' text-anchor='middle' font-size='27' fill='#2b2b33'>prompt + reply model</text>
-<text x='380.0' y='946.1250000000001' text-anchor='middle' font-size='27' fill='#2b2b33'>tools: look up, track,</text>
-<text x='380.0' y='987.975' text-anchor='middle' font-size='27' fill='#2b2b33'>change, return</text>
-<rect x='337.6' y='1044' width='84.8' height='36' rx='18' fill='#ffffff' stroke='#b8732e' stroke-width='2'/>
-<text x='380.0' y='1069' text-anchor='middle' font-size='21' font-weight='600' fill='#b8732e'>demo</text>
-<rect x='880' y='780' width='520' height='260' rx='26' fill='#ffffff' stroke='#7a7f99' stroke-width='4'/>
-<text x='1140.0' y='873.05' text-anchor='middle' font-size='38' font-weight='700' fill='#1b1b1f'>Thread messages</text>
-<text x='1140.0' y='925.2' text-anchor='middle' font-size='29' fill='#2b2b33'>the only link</text>
-<text x='1140.0' y='970.15' text-anchor='middle' font-size='29' fill='#2b2b33'>between the sides</text>
-<rect x='1660' y='780' width='600' height='260' rx='26' fill='#eceef9' stroke='#4b54a8' stroke-width='4'/>
-<text x='1960.0' y='855.225' text-anchor='middle' font-size='38' font-weight='700' fill='#1b1b1f'>Side B · voice_caller</text>
-<text x='1960.0' y='904.2750000000001' text-anchor='middle' font-size='27' fill='#2b2b33'>handler, no model</text>
-<text x='1960.0' y='946.1250000000001' text-anchor='middle' font-size='27' fill='#2b2b33'>the only part that</text>
-<text x='1960.0' y='987.975' text-anchor='middle' font-size='27' fill='#2b2b33'>touches audio</text>
-<rect x='1640' y='1260' width='300' height='240' rx='26' fill='#eceef9' stroke='#4b54a8' stroke-width='4'/>
-<text x='1790.0' y='1347.7' text-anchor='middle' font-size='32' font-weight='700' fill='#1b1b1f'>Speech to text</text>
-<text x='1790.0' y='1392.8' text-anchor='middle' font-size='26' fill='#2b2b33'>Deepgram (live)</text>
-<text x='1790.0' y='1433.1' text-anchor='middle' font-size='26' fill='#2b2b33'>or OpenAI</text>
-<rect x='1980' y='1260' width='300' height='240' rx='26' fill='#eceef9' stroke='#4b54a8' stroke-width='4'/>
-<text x='2130.0' y='1347.7' text-anchor='middle' font-size='32' font-weight='700' fill='#1b1b1f'>Text to speech</text>
-<text x='2130.0' y='1392.8' text-anchor='middle' font-size='26' fill='#2b2b33'>Deepgram, OpenAI,</text>
-<text x='2130.0' y='1433.1' text-anchor='middle' font-size='26' fill='#2b2b33'>or ElevenLabs</text>
-<path d='M1860,410 L1860,776' fill='none' stroke='#4a4a52' stroke-width='4' marker-end='url(#ah)'/>
+<text x='110' y='670' font-size='27' font-weight='400' fill='#4b54a8'>Standard Agent Specification 0.2.0</text>
+<rect x='80' y='770' width='2240' height='360' rx='28' fill='#e3e6f6' stroke='#4b54a8' stroke-width='3'/>
+<text x='1140' y='808' text-anchor='middle' font-size='30' font-weight='700' fill='#4b54a8'>Standard Agent · voice_concierge</text>
+<text x='1140' y='1118' text-anchor='middle' font-size='22' fill='#4b54a8'>one agent, two sides that only exchange text (demo)</text>
+<rect x='100' y='840' width='560' height='260' rx='26' fill='#eceef9' stroke='#4b54a8' stroke-width='4'/>
+<text x='380.0' y='917.55' text-anchor='middle' font-size='38' font-weight='700' fill='#1b1b1f'>Side A · prompt</text>
+<text x='380.0' y='965.05' text-anchor='middle' font-size='26' fill='#2b2b33'>order_support</text>
+<text x='380.0' y='1005.35' text-anchor='middle' font-size='26' fill='#2b2b33'>reply model + tools: look up,</text>
+<text x='380.0' y='1045.65' text-anchor='middle' font-size='26' fill='#2b2b33'>track, change, return</text>
+<rect x='880' y='840' width='520' height='240' rx='26' fill='#ffffff' stroke='#7a7f99' stroke-width='4'/>
+<text x='1140.0' y='923.05' text-anchor='middle' font-size='36' font-weight='700' fill='#1b1b1f'>Thread messages</text>
+<text x='1140.0' y='974.4' text-anchor='middle' font-size='29' fill='#2b2b33'>the only link</text>
+<text x='1140.0' y='1019.3499999999999' text-anchor='middle' font-size='29' fill='#2b2b33'>between the sides</text>
+<rect x='1660' y='840' width='600' height='260' rx='26' fill='#eceef9' stroke='#4b54a8' stroke-width='4'/>
+<text x='1960.0' y='917.55' text-anchor='middle' font-size='38' font-weight='700' fill='#1b1b1f'>Side B · handler</text>
+<text x='1960.0' y='965.05' text-anchor='middle' font-size='26' fill='#2b2b33'>voice_caller · no model</text>
+<text x='1960.0' y='1005.35' text-anchor='middle' font-size='26' fill='#2b2b33'>the only part with audio</text>
+<text x='1960.0' y='1045.65' text-anchor='middle' font-size='26' fill='#2b2b33'>from the voice package</text>
+<rect x='1600' y='1150' width='720' height='500' rx='26' fill='none' stroke='#4b54a8' stroke-width='3' stroke-dasharray='6 8'/>
+<rect x='1640' y='1300' width='300' height='240' rx='26' fill='#eceef9' stroke='#4b54a8' stroke-width='4'/>
+<text x='1790.0' y='1387.7' text-anchor='middle' font-size='32' font-weight='700' fill='#1b1b1f'>Speech to text</text>
+<text x='1790.0' y='1432.8' text-anchor='middle' font-size='26' fill='#2b2b33'>Deepgram (live)</text>
+<text x='1790.0' y='1473.1' text-anchor='middle' font-size='26' fill='#2b2b33'>or OpenAI</text>
+<rect x='1980' y='1300' width='300' height='240' rx='26' fill='#eceef9' stroke='#4b54a8' stroke-width='4'/>
+<text x='2130.0' y='1387.7' text-anchor='middle' font-size='32' font-weight='700' fill='#1b1b1f'>Text to speech</text>
+<text x='2130.0' y='1432.8' text-anchor='middle' font-size='26' fill='#2b2b33'>Deepgram, OpenAI,</text>
+<text x='2130.0' y='1473.1' text-anchor='middle' font-size='26' fill='#2b2b33'>or ElevenLabs</text>
+<text x='1790' y='1580' text-anchor='middle' font-size='22' fill='#2b2b33'>4  transcribe, live</text><text x='2130' y='1580' text-anchor='middle' font-size='22' fill='#2b2b33'>9  synthesize, streamed</text>
+<rect x='1704.1' y='1626' width='511.79999999999995' height='36' rx='18' fill='#ffffff' stroke='#4b54a8' stroke-width='2'/>
+<text x='1960.0' y='1651' text-anchor='middle' font-size='21' font-weight='600' fill='#4b54a8'>@petehaas/standard-agents-livekit-voice</text>
+<path d='M1860,410 L1860,836' fill='none' stroke='#4a4a52' stroke-width='4' marker-end='url(#ah)'/>
 <circle cx='1892' cy='470' r='21' fill='#2e8a8f'/><text x='1892' y='479' text-anchor='middle' font-size='25' font-weight='700' fill='#fff'>3</text>
 <rect x='1922' y='446' width='103.0' height='34' fill='#ffffff'/>
 <text x='1928' y='479' font-size='28' fill='#2b2b33'>listen</text>
 <rect x='1922' y='482' width='103.0' height='34' fill='#ffffff'/>
 <text x='1928' y='515' font-size='28' fill='#2b2b33'>16 kHz</text>
-<path d='M2140,776 L2140,414' fill='none' stroke='#4a4a52' stroke-width='4' marker-end='url(#ah)'/>
+<path d='M2140,836 L2140,414' fill='none' stroke='#4a4a52' stroke-width='4' marker-end='url(#ah)'/>
 <circle cx='2172' cy='470' r='21' fill='#4b54a8'/><text x='2172' y='479' text-anchor='middle' font-size='25' font-weight='700' fill='#fff'>10</text>
 <rect x='2202' y='446' width='88.5' height='34' fill='#ffffff'/>
 <text x='2208' y='479' font-size='28' fill='#2b2b33'>speak</text>
@@ -74,37 +76,27 @@
 <text x='2208' y='515' font-size='28' fill='#2b2b33'>24 kHz</text>
 <rect x='1636' y='676' width='650' height='34' fill='#f5f6fc'/>
 <text x='1648' y='702' font-size='24' font-weight='400' fill='#2b2b33'>3 and 10 are runtime streams (PCM)</text>
-<path d='M1660,860 L1404,860' fill='none' stroke='#4a4a52' stroke-width='4' marker-end='url(#ah)'/>
-<circle cx='1430' cy='820' r='21' fill='#4b54a8'/><text x='1430' y='829' text-anchor='middle' font-size='25' font-weight='700' fill='#fff'>5</text>
-<text x='1466' y='829' font-size='28' fill='#2b2b33'></text>
-<path d='M1400,960 L1656,960' fill='none' stroke='#4a4a52' stroke-width='4' marker-end='url(#ah)'/>
-<circle cx='1430' cy='1000' r='21' fill='#4b54a8'/><text x='1430' y='1009' text-anchor='middle' font-size='25' font-weight='700' fill='#fff'>8</text>
-<text x='1466' y='1009' font-size='28' fill='#2b2b33'></text>
-<text x='1336' y='1110' font-size='22' font-weight='400' fill='#2b2b33'>5  caller’s words,</text>
-<text x='1336' y='1146' font-size='22' font-weight='400' fill='#2b2b33'>    as side B’s message</text>
-<text x='1336' y='1182' font-size='22' font-weight='400' fill='#2b2b33'>8  side A’s reply</text>
-<path d='M880,860 L664,860' fill='none' stroke='#4a4a52' stroke-width='4' marker-end='url(#ah)'/>
-<circle cx='700' cy='820' r='21' fill='#4b54a8'/><text x='700' y='829' text-anchor='middle' font-size='25' font-weight='700' fill='#fff'>6</text>
-<text x='736' y='829' font-size='28' fill='#2b2b33'></text>
-<path d='M660,960 L876,960' fill='none' stroke='#4a4a52' stroke-width='4' marker-end='url(#ah)'/>
-<circle cx='700' cy='1000' r='21' fill='#4b54a8'/><text x='700' y='1009' text-anchor='middle' font-size='25' font-weight='700' fill='#fff'>7</text>
-<text x='736' y='1009' font-size='28' fill='#2b2b33'></text>
-<text x='690' y='1110' font-size='24' font-weight='400' fill='#2b2b33'>6  side A’s turn</text>
-<text x='690' y='1146' font-size='24' font-weight='400' fill='#2b2b33'>7  reply text</text>
-<path d='M1740,1040 L1740,1256' fill='none' stroke='#4a4a52' stroke-width='4' marker-end='url(#ah)'/>
-<path d='M1840,1256 L1840,1044' fill='none' stroke='#4a4a52' stroke-width='4' marker-end='url(#ah)'/>
-<circle cx='1760' cy='1150' r='21' fill='#4b54a8'/><text x='1760' y='1159' text-anchor='middle' font-size='25' font-weight='700' fill='#fff'>4</text>
-<text x='1796' y='1159' font-size='28' fill='#2b2b33'></text>
-<path d='M2080,1040 L2080,1256' fill='none' stroke='#4a4a52' stroke-width='4' marker-end='url(#ah)'/>
-<path d='M2180,1256 L2180,1044' fill='none' stroke='#4a4a52' stroke-width='4' marker-end='url(#ah)'/>
-<circle cx='2100' cy='1150' r='21' fill='#4b54a8'/><text x='2100' y='1159' text-anchor='middle' font-size='25' font-weight='700' fill='#fff'>9</text>
-<text x='2136' y='1159' font-size='28' fill='#2b2b33'></text>
-<text x='1790' y='1540' text-anchor='middle' font-size='22' fill='#2b2b33'>4  transcribe, live</text><text x='2130' y='1540' text-anchor='middle' font-size='22' fill='#2b2b33'>9  synthesize, streamed</text>
-<path d='M300,780 L300,736 L1440,736 L1440,480 L1700,480 L1700,414' fill='none' stroke='#b8732e' stroke-width='4' stroke-dasharray='14 10' marker-end='url(#ahd)'/>
-<text x='330' y='722' font-size='22' font-weight='400' fill='#b8732e'>tools put cards on screen: livekit.show runtime stream → host → show_card RPC → desk</text>
-<rect x='100' y='1380' width='1380' height='190' rx='20' fill='#ffffff' stroke='#c9cce3' stroke-width='2'/>
-<text x='130' y='1430' font-size='26' font-weight='700' fill='#1b1b1f'>Spec surface the voice package uses (ThreadState):</text>
-<text x='130' y='1474' font-size='26' font-weight='400' fill='#2b2b33'>runtime streams · thread messages · thread values · env</text>
-<text x='130' y='1518' font-size='23' font-weight='400' fill='#5a5d70'>Capability names (livekit.*) are this repo’s proposal. The spec keeps them</text>
-<text x='130' y='1550' font-size='23' font-weight='400' fill='#5a5d70'>opaque and does not yet define how an execution host attaches.</text>
+<path d='M1660,920 L1404,920' fill='none' stroke='#4a4a52' stroke-width='4' marker-end='url(#ah)'/>
+<circle cx='1430' cy='880' r='21' fill='#4b54a8'/><text x='1430' y='889' text-anchor='middle' font-size='25' font-weight='700' fill='#fff'>5</text>
+<path d='M1400,1020 L1656,1020' fill='none' stroke='#4a4a52' stroke-width='4' marker-end='url(#ah)'/>
+<circle cx='1430' cy='1060' r='21' fill='#4b54a8'/><text x='1430' y='1069' text-anchor='middle' font-size='25' font-weight='700' fill='#fff'>8</text>
+<path d='M880,920 L664,920' fill='none' stroke='#4a4a52' stroke-width='4' marker-end='url(#ah)'/>
+<circle cx='700' cy='880' r='21' fill='#4b54a8'/><text x='700' y='889' text-anchor='middle' font-size='25' font-weight='700' fill='#fff'>6</text>
+<path d='M660,1020 L876,1020' fill='none' stroke='#4a4a52' stroke-width='4' marker-end='url(#ah)'/>
+<circle cx='700' cy='1060' r='21' fill='#4b54a8'/><text x='700' y='1069' text-anchor='middle' font-size='25' font-weight='700' fill='#fff'>7</text>
+<text x='130' y='1180' font-size='24' font-weight='400' fill='#2b2b33'>5  caller’s words, as side B’s message   ·   6  side A’s turn</text>
+<text x='130' y='1216' font-size='24' font-weight='400' fill='#2b2b33'>7  reply text   ·   8  side B’s turn: speak the reply</text>
+<path d='M1740,1100 L1740,1296' fill='none' stroke='#4a4a52' stroke-width='4' marker-end='url(#ah)'/>
+<path d='M1840,1296 L1840,1104' fill='none' stroke='#4a4a52' stroke-width='4' marker-end='url(#ah)'/>
+<circle cx='1760' cy='1225' r='21' fill='#4b54a8'/><text x='1760' y='1234' text-anchor='middle' font-size='25' font-weight='700' fill='#fff'>4</text>
+<path d='M2080,1100 L2080,1296' fill='none' stroke='#4a4a52' stroke-width='4' marker-end='url(#ah)'/>
+<path d='M2180,1296 L2180,1104' fill='none' stroke='#4a4a52' stroke-width='4' marker-end='url(#ah)'/>
+<circle cx='2100' cy='1225' r='21' fill='#4b54a8'/><text x='2100' y='1234' text-anchor='middle' font-size='25' font-weight='700' fill='#fff'>9</text>
+<path d='M600,840 L600,736 L1440,736 L1440,480 L1700,480 L1700,414' fill='none' stroke='#b8732e' stroke-width='4' stroke-dasharray='14 10' marker-end='url(#ahd)'/>
+<text x='630' y='722' font-size='22' font-weight='400' fill='#b8732e'>tool cards: livekit.show stream → host → show_card RPC → desk</text>
+<rect x='100' y='1290' width='1380' height='190' rx='20' fill='#ffffff' stroke='#c9cce3' stroke-width='2'/>
+<text x='130' y='1340' font-size='26' font-weight='700' fill='#1b1b1f'>Spec surface the voice package uses (ThreadState):</text>
+<text x='130' y='1384' font-size='26' font-weight='400' fill='#2b2b33'>runtime streams · thread messages · thread values · env</text>
+<text x='130' y='1428' font-size='23' font-weight='400' fill='#5a5d70'>Capability names (livekit.*) are this repo’s proposal. The spec keeps them</text>
+<text x='130' y='1460' font-size='23' font-weight='400' fill='#5a5d70'>opaque and does not yet define how an execution host attaches.</text>
 </svg>

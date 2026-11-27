@@ -15,7 +15,7 @@ export default defineAgent({
   // maxSteps counts every model call in the session, not per turn. At 6, the
   // call went silent on the caller's fourth question. Keep it well above
   // maxSessionTurns (each turn is one or two steps: an optional lookup, then the reply).
-  sideA: { label: 'Order support', prompt: 'voice_concierge', maxSteps: 200, stopOnResponse: true },
+  sideA: { label: 'Order support', prompt: 'order_support', maxSteps: 200, stopOnResponse: true },
   sideB: { label: 'Caller (voice)', handler: 'voice_caller' },
   maxSessionTurns: 80,
   // Non-secret defaults. A thread env value overrides each one.
